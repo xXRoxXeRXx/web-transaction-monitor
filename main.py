@@ -62,9 +62,9 @@ def main() -> None:
         'default': ThreadPoolExecutor(1)  # Only 1 worker means jobs run one after another
     }
     job_defaults = {
-        'coalesce': False,
+        'coalesce': True,  # Combine multiple missed runs into one
         'max_instances': 1,  # Never run the same job twice at the same time
-        'misfire_grace_time': 60  # Allow some delay in sequential mode
+        'misfire_grace_time': None  # Always run missed jobs, no matter how late
     }
     
     scheduler = BackgroundScheduler(executors=executors, job_defaults=job_defaults)
