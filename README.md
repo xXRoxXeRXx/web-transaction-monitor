@@ -15,9 +15,6 @@ This tool records step-level execution times for web transactions and visualizes
 - [Project Structure](#project-structure)
 - [Adding Monitoring Tests](#adding-a-new-monitoring-test)
 - [Configuration](#configuration)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## ✨ Features
 
@@ -137,40 +134,17 @@ Environment variables in `docker-compose.yml`:
 - `PROMETHEUS_PORT`: Port for the metrics server. Default: `8000`.
 - `HEADLESS`: Set to `true` (default) for production or `false` for debugging.
 
-For detailed development setup, testing, and troubleshooting, see [DEVELOPMENT.md](DEVELOPMENT.md).
+Platform credentials are configured in `.env` file (copy from `.env.example`).
 
-## 🤝 Contributing
+##  Metrics
 
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and contribute to the project.
+The system exports the following Prometheus metrics:
 
-## 📄 License
+- `transaction_duration_seconds{step="...",usecase="..."}` - Duration of each test step
+- `transaction_success{usecase="..."}` - Success status (1.0 = success, 0.0 = failure)
+- `transaction_last_run_timestamp{usecase="..."}` - Timestamp of last execution
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Playwright](https://playwright.dev/) - Browser automation
-- [Prometheus](https://prometheus.io/) - Metrics collection
-- [Grafana](https://grafana.com/) - Visualization
-- [APScheduler](https://apscheduler.readthedocs.io/) - Job scheduling
-
-## 📊 Screenshots
-
-### Grafana Dashboard
-![Grafana Dashboard](docs/images/dashboard-preview.png)
-*Real-time monitoring of transaction steps and success rates*
-
-### Metrics Export
-```
-transaction_duration_seconds{step="01_Login",usecase="example_test"} 2.45
-transaction_success{usecase="example_test"} 1.0
-```
-
-## 🔗 Links
-
-- [Documentation](DEVELOPMENT.md)
-- [Changelog](CHANGELOG.md)
-- [Contributing](CONTRIBUTING.md)
+Access Grafana dashboards at `http://localhost:3000` (default credentials: admin/admin).
 
 ---
 
