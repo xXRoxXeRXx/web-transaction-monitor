@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 class IonosNextcloudWorkspacePictureTest(MonitorBase):
     def __init__(self, usecase_name: str = None) -> None:
         name = usecase_name or "ionos_nextcloud_workspace_picture_test"
-        super().__init__(usecase_name=name)
+        # Read headless setting from environment (default: True for Docker)
+        headless = os.getenv('HEADLESS', 'true').lower() in ('true', '1', 'yes')
+        super().__init__(usecase_name=name, headless=headless)
 
     def run(self) -> None:
         # Get configuration from environment
@@ -46,14 +48,17 @@ class IonosNextcloudWorkspacePictureTest(MonitorBase):
 
         # Step 3: Browse and open picture
         def browse_logic():
-            # Click folder (tr:nth-child(2))
+            # Click folder 'pictures'
             self.page.locator('tr:nth-child(2) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=10000)
             
-            # Click subfolder
+            # Click folder 'norway'
             self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
             
-            # Open specific picture preview (tr:nth-child(3))
-            self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .files-list__row-icon-preview-container > .files-list__row-icon-preview').click(timeout=10000)
+            # Open picture
+            self.page.get_by_role('row', name='Auswahl für die Datei "abhishek-umrao-qsvNYg6iMGk-unsplash.jpg" umschalten').locator('img').click(timeout=10000)
+            
+            # Wait for image to fully load
+            self.page.wait_for_load_state("networkidle", timeout=10000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 

@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 class HiDriveNextPictureTest(MonitorBase):
     def __init__(self, usecase_name: str = None) -> None:
         name = usecase_name or "hidrive_next_picture_test"
-        super().__init__(usecase_name=name)
+        # Read headless setting from environment (default: True for Docker)
+        headless = os.getenv('HEADLESS', 'true').lower() in ('true', '1', 'yes')
+        super().__init__(usecase_name=name, headless=headless)
 
     def run(self) -> None:
         # Get configuration from environment
@@ -51,6 +53,9 @@ class HiDriveNextPictureTest(MonitorBase):
             
             # Open picture
             self.page.get_by_role('row', name='Auswahl für die Datei "abhishek-umrao-qsvNYg6iMGk-unsplash.jpg" umschalten').locator('img').click(timeout=10000)
+            
+            # Wait for image to fully load
+            self.page.wait_for_load_state("networkidle", timeout=10000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 
