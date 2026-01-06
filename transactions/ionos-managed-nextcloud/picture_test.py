@@ -26,20 +26,20 @@ class IonosManagedNextcloudPictureTest(MonitorBase):
         def login_logic():
             # Robust Login (Using the recorded roles with fallback to IDs if possible)
             try:
-                self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username, timeout=10000)
+                self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username)
             except Exception:
                 # Fallback to broad locator if role name differs by language
-                self.page.locator('input[name="user"], #user').fill(username, timeout=5000)
+                self.page.locator('input[name="user"], #user').first.fill(username)
                 
             try:
-                self.page.get_by_role('textbox', name='Passwort').fill(password, timeout=10000)
+                self.page.get_by_role('textbox', name='Passwort').fill(password)
             except Exception:
-                self.page.locator('input[name="password"], #password').fill(password, timeout=5000)
+                self.page.locator('input[name="password"], #password').first.fill(password)
                 
             try:
-                self.page.get_by_role('button', name='Anmelden').click(timeout=10000)
+                self.page.get_by_role('button', name='Anmelden').click()
             except Exception:
-                self.page.locator('button[type="submit"], #submit').click(timeout=5000)
+                self.page.locator('button[type="submit"], #submit').first.click()
             
             # Wait for dashboard
             self.page.wait_for_selector(".files-list", timeout=30000)
