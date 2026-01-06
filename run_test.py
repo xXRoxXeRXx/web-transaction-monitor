@@ -3,12 +3,14 @@
 Universal test runner for local execution with visible browser.
 
 Usage:
-    python run_test.py hidrive-legacy          # Run HiDrive Legacy Picture Test
-    python run_test.py hidrive-next            # Run HiDrive Next Picture Test
-    python run_test.py nextcloud-workspace     # Run Nextcloud Workspace Picture Test
-    python run_test.py hidrive-next-settings   # Run HiDrive Next Settings Test
-    python run_test.py nextcloud-workspace-settings  # Run Nextcloud Workspace Settings Test
-    python run_test.py all                     # Run all tests sequentially
+    python run_test.py hidrive-legacy               # Run HiDrive Legacy Picture Test
+    python run_test.py hidrive-legacy-settings      # Run HiDrive Legacy Settings Test
+    python run_test.py hidrive-next                 # Run HiDrive Next Picture Test
+    python run_test.py hidrive-next-settings        # Run HiDrive Next Settings Test
+    python run_test.py nextcloud-workspace          # Run Nextcloud Workspace Picture Test
+    python run_test.py nextcloud-workspace-settings # Run Nextcloud Workspace Settings Test
+    python run_test.py managed-nextcloud            # Run IONOS Managed Nextcloud Picture Test
+    python run_test.py all                          # Run all tests sequentially
 """
 import sys
 import os
@@ -75,6 +77,11 @@ TESTS = {
         'dir': 'ionos-nextcloud-workspace',
         'file': 'settings_test.py',
         'class': 'IonosNextcloudWorkspaceSettingsTest',
+    },
+    'managed-nextcloud': {
+        'dir': 'ionos-managed-nextcloud',
+        'file': 'picture_test.py',
+        'class': 'IonosManagedNextcloudPictureTest',
     }
 }
 
