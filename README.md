@@ -34,8 +34,14 @@ This tool records step-level execution times for web transactions and visualizes
 
 - `main.py`: The heart of the system—discovers tests, schedules them, and runs the Prometheus metrics server.
 - `monitor_base.py`: The foundation for all tests. It manages the Playwright browser lifecycle and automatically handles metrics reporting.
-- `transactions/`: Place your monitoring scripts here (recursive subdirectories are supported).
+- `transactions/`: Place your monitoring scripts here (recursive subdirectories are supported):
+  - `hidrive-legacy/`: HiDrive Legacy platform tests
+  - `hidrive-next/`: HiDrive Next platform tests  
+  - `ionos-nextcloud-workspace/`: IONOS Nextcloud Workspace tests
+  - `ionos-managed-nextcloud/`: IONOS Managed Nextcloud tests
 - `runners/python_runner.py`: Executes your Python monitoring scripts.
+- `run_test.py`: Universal test runner for local execution with visible browser.
+- `.env`: Environment configuration (not in repository, copy from `.env.example`).
 
 ## Quick Start
 
@@ -55,34 +61,72 @@ docker-compose up -d --build
 The best way to create a new test is to record it using the Playwright CLI and then wrap it in our `MonitorBase` class.
 
 ### 1. Record the Flow
+
 Run the following command on your local machine to record your interaction:
+
 ```bash
 npx playwright codegen https://your-website.com --target python
 ```
 
 ### 2. Create the Test File
-Create a new file in `transactions/your.domain/test_name.py`:
+
+Create a new file in `transactions/your-platform/test_name.py`:
 
 ```python
 from monitor_base import MonitorBase
+import os
 
 class MyNewTest(MonitorBase):
+    def __init__(self, usecase_name: str = None) -> None:
+        name = usecase_name or "my_new_test"
+        # Read headless setting from environment (default: True for Docker)
+        headless = os.getenv('HEADLESS', 'true').lower() in ('true', '1', 'yes')
+        super().__init__(usecase_name=name, headless=headless)
+
     def run(self):
+        # Get configuration from environment
+        login_url = os.getenv('MY_PLATFORM_URL', 'https://your-website.com')
+        username = os.getenv('MY_PLATFORM_USER')
+        password = os.getenv('MY_PLATFORM_PASS')
+        
         # Step 1: Initialize
         self.measure_step("01_Go to Start", lambda: 
-            self.page.goto('https://your-website.com')
+            self.page.goto(login_url)
         )
 
         # Step 2: Interaction Logic
         def interaction():
-            self.page.fill("#username", "my-user")
+            self.page.fill("#username", username)
             self.page.click("#login-button")
             self.page.wait_for_selector(".dashboard")
             
         self.measure_step("02_Login Flow", interaction)
+
+if __name__ == "__main__":
+    monitor = MyNewTest()
+    monitor.execute()
 ```
 
-### 3. Automatic Sorting in Grafana
+### 3. Add Environment Variables
+
+Add your credentials to `.env` (copy from `.env.example` if needed):
+
+```bash
+MY_PLATFORM_URL=https://your-website.com
+MY_PLATFORM_USER=your_username
+MY_PLATFORM_PASS=your_password
+```
+
+### 4. Test Locally
+
+Run your test locally with visible browser:
+
+```bash
+python run_test.py your-test-name
+```
+
+### 5. Automatic Sorting in Grafana
+
 Always prefix your step names with numbers (e.g., `01_`, `02_`). This ensures that Grafana displays them in the correct chronological order instead of alphabetically.
 
 ## Configuration
