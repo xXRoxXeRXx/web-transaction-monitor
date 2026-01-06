@@ -9,6 +9,7 @@ Usage:
     python run_test.py hidrive-next-settings        # Run HiDrive Next Settings Test
     python run_test.py nextcloud-workspace          # Run Nextcloud Workspace Picture Test
     python run_test.py nextcloud-workspace-settings # Run Nextcloud Workspace Settings Test
+    python run_test.py nextcloud-workspace-document # Run Nextcloud Workspace Document Test
     python run_test.py managed-nextcloud            # Run IONOS Managed Nextcloud Picture Test
     python run_test.py all                          # Run all tests sequentially
 """
@@ -77,6 +78,11 @@ TESTS = {
         'dir': 'ionos-nextcloud-workspace',
         'file': 'settings_test.py',
         'class': 'IonosNextcloudWorkspaceSettingsTest',
+    },
+    'nextcloud-workspace-document': {
+        'dir': 'ionos-nextcloud-workspace',
+        'file': 'document_test.py',
+        'class': 'IonosNextcloudWorkspaceDocumentTest',
     },
     'managed-nextcloud': {
         'dir': 'ionos-managed-nextcloud',
