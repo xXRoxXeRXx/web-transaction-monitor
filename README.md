@@ -4,6 +4,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![GitHub release](https://img.shields.io/github/v/release/xXRoxXeRXx/web-transaction-monitor)](https://github.com/xXRoxXeRXx/web-transaction-monitor/releases)
 
 A high-performance, Docker-based synthetic monitoring solution using **Python**, **Playwright**, **Prometheus**, and **Grafana**.
 
