@@ -51,6 +51,11 @@ TESTS = {
         'file': 'picture_test.py',
         'class': 'HiDriveLegacyPictureTest',
     },
+    'hidrive-legacy-settings': {
+        'dir': 'hidrive-legacy',
+        'file': 'settings_test.py',
+        'class': 'HiDriveLegacySettingsTest',
+    },
     'hidrive-next': {
         'dir': 'hidrive-next',
         'file': 'picture_test.py',
