@@ -4,15 +4,20 @@ import os
 
 logger = logging.getLogger(__name__)
 
-class StorageIonosFrPictureTest(MonitorBase):
+class HiDriveNextPictureTest(MonitorBase):
     def __init__(self, usecase_name: str = None) -> None:
-        name = usecase_name or "storage.ionos.fr_picture_test"
+        name = usecase_name or "hidrive_next_picture_test"
         super().__init__(usecase_name=name)
 
     def run(self) -> None:
+        # Get configuration from environment
+        login_url = os.getenv('HIDRIVE_NEXT_URL', 'https://id.ionos.fr/identifier?')
+        username = os.getenv('HIDRIVE_NEXT_USER')
+        password = os.getenv('HIDRIVE_NEXT_PASS')
+        
         # Step 1: Go to start URL
         self.measure_step("01_Go to start URL", lambda: 
-            self.page.goto('https://id.ionos.fr/identifier?')
+            self.page.goto(login_url)
         )
 
         # Step 2: Cookie & Login
@@ -24,11 +29,11 @@ class StorageIonosFrPictureTest(MonitorBase):
                 pass
             
             # Fill Username
-            self.page.fill("input#username", os.getenv('IONOS_USER'), timeout=5000)
+            self.page.fill("input#username", username, timeout=5000)
             self.page.click("button#button--with-loader", timeout=5000)
             
             # Fill Password
-            self.page.fill("input#password", os.getenv('IONOS_PASS'), timeout=10000)
+            self.page.fill("input#password", password, timeout=10000)
             self.page.click("button#button--with-loader", timeout=5000)
             
             # Fast Wait for post-login element
@@ -61,6 +66,6 @@ class StorageIonosFrPictureTest(MonitorBase):
         self.measure_step("04_Close and Logout", logout_logic)
 
 if __name__ == "__main__":
-    monitor = StorageIonosFrPictureTest()
+    monitor = HiDriveNextPictureTest()
     monitor.execute()
 

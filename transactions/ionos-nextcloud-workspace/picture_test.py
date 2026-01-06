@@ -4,23 +4,25 @@ import os
 
 logger = logging.getLogger(__name__)
 
-class WorkspaceKallisto45DePictureTest(MonitorBase):
+class IonosNextcloudWorkspacePictureTest(MonitorBase):
     def __init__(self, usecase_name: str = None) -> None:
-        name = usecase_name or "workspace.kallisto45.de_picture_test"
+        name = usecase_name or "ionos_nextcloud_workspace_picture_test"
         super().__init__(usecase_name=name)
 
     def run(self) -> None:
+        # Get configuration from environment
+        login_url = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_URL', 'https://workspace.kallisto45.de/login')
+        username = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_USER')
+        password = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_PASS')
+        
         # Step 1: Go to start URL
         self.measure_step("01_Go to start URL", lambda: 
-            self.page.goto('https://workspace.kallisto45.de/login')
+            self.page.goto(login_url)
         )
 
         # Step 2: Cookie & Login
         def login_logic():
             # Robust Login (Using the recorded roles with fallback to IDs if possible)
-            username = os.getenv('KALLISTO_USER')
-            password = os.getenv('KALLISTO_PASS')
-            
             try:
                 self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username, timeout=10000)
             except Exception:
@@ -74,6 +76,6 @@ class WorkspaceKallisto45DePictureTest(MonitorBase):
         self.measure_step("04_Close and Logout", logout_logic)
 
 if __name__ == "__main__":
-    monitor = WorkspaceKallisto45DePictureTest()
+    monitor = IonosNextcloudWorkspacePictureTest()
     monitor.execute()
 
