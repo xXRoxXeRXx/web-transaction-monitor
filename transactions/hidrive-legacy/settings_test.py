@@ -50,8 +50,8 @@ class HiDriveLegacySettingsTest(MonitorBase):
 
         # Step 3: Navigate to Settings
         def navigate_to_settings():
-            # Click on Settings link
-            self.page.locator('a').filter(has_text='Einstellungen').click()
+            # Click on Settings link using the correct selector
+            self.page.locator('li.sj-navigation-item[data-name="settings.account"] a').click(timeout=5000)
             
             # Wait for settings page to load
             self.page.wait_for_load_state("networkidle", timeout=10000)
@@ -60,8 +60,8 @@ class HiDriveLegacySettingsTest(MonitorBase):
 
         # Step 4: Navigate to Private section
         def navigate_to_private():
-            # Click on Private link
-            self.page.locator('a').filter(has_text='Privat').click()
+            # Click on Personal/Private link using the correct selector
+            self.page.locator('li.sj-navigation-item[data-name="my.files"] a').click(timeout=5000)
             
             # Wait for private settings to load
             self.page.wait_for_load_state("networkidle", timeout=10000)
