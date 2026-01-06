@@ -1,0 +1,166 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "rgb(0, 189, 214)",
+                        "mode": "fixed"
+                    },
+                    "custom": {
+                        "axisLabel": "Sekunden",
+                        "axisPlacement": "auto",
+                        "fillOpacity": 100,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineWidth": 1,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 14,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "barRadius": 0,
+                "barWidth": 0.8,
+                "groupWidth": 0.7,
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "orientation": "auto",
+                "showValue": "never",
+                "stacking": "none",
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                },
+                "xTickLabelRotation": 0
+            },
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "avg_over_time(transaction_duration_seconds{usecase=~\"$usecase\"}[$__range])",
+                    "format": "time_series",
+                    "interval": "",
+                    "legendFormat": "{{step}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Durchschnittliches Schritt Timing - $usecase",
+            "transformations": [
+                {
+                    "id": "reduce",
+                    "options": {
+                        "reducers": [
+                            "mean"
+                        ]
+                    }
+                },
+                {
+                    "id": "sortBy",
+                    "options": {
+                        "fields": {},
+                        "sort": [
+                            {
+                                "field": "Field"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "renameByRegex",
+                    "options": {
+                        "renamePattern": "$1",
+                        "regex": "^\\d+_(.*)"
+                    }
+                }
+            ],
+            "type": "barchart"
+        }
+    ],
+    "schemaVersion": 30,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allValue": ".*",
+                "current": {},
+                "datasource": "Prometheus",
+                "definition": "label_values(transaction_duration_seconds, usecase)",
+                "hide": 0,
+                "includeAll": false,
+                "label": "Use Case",
+                "multi": false,
+                "name": "usecase",
+                "options": [],
+                "query": "label_values(transaction_duration_seconds, usecase)",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "tagValuesQuery": "",
+                "tags": [],
+                "tagsQuery": "",
+                "type": "query",
+                "useTags": false
+            }
+        ]
+    },
+    "time": {
+        "from": "now-24h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Step Timing Board",
+    "uid": "step-timing-board",
+    "version": 1
+}
