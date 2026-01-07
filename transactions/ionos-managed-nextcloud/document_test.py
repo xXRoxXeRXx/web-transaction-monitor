@@ -29,7 +29,8 @@ class IonosManagedNextcloudDocumentTest(MonitorBase):
             self.page.locator('input[data-login-form-input-password]').fill(password, timeout=10000)
             self.page.locator('button[data-login-form-submit]').click(timeout=10000)
             
-            # Wait for dashboard
+            # Wait for dashboard to load
+            self.page.wait_for_load_state("networkidle", timeout=15000)
             self.page.wait_for_selector(".files-list", timeout=30000)
 
         self.measure_step("02_Login", login_logic)

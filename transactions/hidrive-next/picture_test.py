@@ -38,6 +38,9 @@ class HiDriveNextPictureTest(MonitorBase):
             self.page.fill("input#password", password, timeout=10000)
             self.page.click("button#button--with-loader", timeout=5000)
             
+            # Wait for post-login page to load
+            self.page.wait_for_load_state("networkidle", timeout=15000)
+            
             # Fast Wait for post-login element
             self.page.wait_for_selector(".files-list", timeout=30000)
 
@@ -47,15 +50,20 @@ class HiDriveNextPictureTest(MonitorBase):
         def browse_logic():
             # Click folder 'pictures'
             self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=15000)
             
             # Click folder 'norway'
             self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=15000)
             
             # Open picture using data-cy attribute (language-independent)
             self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] img').click(timeout=10000)
             
             # Wait for image to fully load
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=15000)
+            
+            # Verify image viewer is open and image is loaded
+            self.page.wait_for_selector('.viewer__file-wrapper img.loaded', timeout=10000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 

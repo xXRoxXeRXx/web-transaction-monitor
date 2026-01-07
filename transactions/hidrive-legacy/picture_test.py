@@ -61,6 +61,9 @@ class HiDriveLegacyPictureTest(MonitorBase):
             
             # Wait for image to load (wait for viewer to be ready)
             self.page.wait_for_load_state("networkidle", timeout=10000)
+            
+            # Verify image viewer is open and image is loaded
+            self.page.wait_for_selector('.imageview', timeout=10000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 

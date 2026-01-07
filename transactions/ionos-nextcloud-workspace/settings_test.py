@@ -29,7 +29,8 @@ class IonosNextcloudWorkspaceSettingsTest(MonitorBase):
             self.page.locator('input[data-login-form-input-password]').fill(password, timeout=10000)
             self.page.locator('button[data-login-form-submit]').click(timeout=10000)
             
-            # Wait for dashboard
+            # Wait for dashboard to load
+            self.page.wait_for_load_state("networkidle", timeout=15000)
             self.page.wait_for_selector(".files-list", timeout=30000)
 
         self.measure_step("02_Cookie & Login", login_logic)
@@ -41,11 +42,10 @@ class IonosNextcloudWorkspaceSettingsTest(MonitorBase):
             
             # Navigate to Settings using ID (language-independent)
             self.page.locator('a#settings').click(timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=15000)
             
             # Navigate to Security using data-section-id (language-independent)
             self.page.locator('li[data-section-id="security"] a').click(timeout=10000)
-            
-            # Wait for security page to load
             self.page.wait_for_load_state("networkidle", timeout=15000)
         
         self.measure_step("03_Navigate to Settings & Security", navigate_to_settings_and_security)
@@ -54,8 +54,6 @@ class IonosNextcloudWorkspaceSettingsTest(MonitorBase):
         def go_back_to_files():
             # Use ID (language-independent)
             self.page.locator('a#nextcloud').click(timeout=10000)
-            
-            # Wait for files page to load
             self.page.wait_for_load_state("networkidle", timeout=15000)
         
         self.measure_step("04_Go back to files", go_back_to_files)
