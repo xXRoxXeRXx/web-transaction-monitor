@@ -56,8 +56,8 @@ class IonosManagedNextcloudDocumentTest(MonitorBase):
             iframe_locator.locator('.leaflet-layer').click(timeout=10000)
             iframe_locator.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=10000)
             
-            # Wait a moment for content to be saved
-            self.page.wait_for_timeout(2000)
+            # Wait for document canvas to confirm content is rendered
+            iframe_locator.locator('#document-canvas').wait_for(state='visible', timeout=10000)
 
         self.measure_step("03_Create and edit document", create_document_logic)
 

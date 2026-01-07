@@ -5,8 +5,10 @@ Universal test runner for local execution with visible browser.
 Usage:
     python run_test.py hidrive-legacy               # Run HiDrive Legacy Picture Test
     python run_test.py hidrive-legacy-settings      # Run HiDrive Legacy Settings Test
+    python run_test.py hidrive-legacy-document      # Run HiDrive Legacy Document Test
     python run_test.py hidrive-next                 # Run HiDrive Next Picture Test
     python run_test.py hidrive-next-settings        # Run HiDrive Next Settings Test
+    python run_test.py hidrive-next-document        # Run HiDrive Next Document Test
     python run_test.py nextcloud-workspace          # Run Nextcloud Workspace Picture Test
     python run_test.py nextcloud-workspace-settings # Run Nextcloud Workspace Settings Test
     python run_test.py nextcloud-workspace-document # Run Nextcloud Workspace Document Test
@@ -65,6 +67,11 @@ TESTS = {
         'file': 'settings_test.py',
         'class': 'HiDriveLegacySettingsTest',
     },
+    'hidrive-legacy-document': {
+        'dir': 'hidrive-legacy',
+        'file': 'document_test.py',
+        'class': 'HiDriveLegacyDocumentTest',
+    },
     'hidrive-next': {
         'dir': 'hidrive-next',
         'file': 'picture_test.py',
@@ -74,6 +81,11 @@ TESTS = {
         'dir': 'hidrive-next',
         'file': 'settings_test.py',
         'class': 'HiDriveNextSettingsTest',
+    },
+    'hidrive-next-document': {
+        'dir': 'hidrive-next',
+        'file': 'document_test.py',
+        'class': 'HiDriveNextDocumentTest',
     },
     'nextcloud-workspace': {
         'dir': 'ionos-nextcloud-workspace',
