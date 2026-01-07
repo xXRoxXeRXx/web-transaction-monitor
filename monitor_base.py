@@ -1,12 +1,17 @@
 from abc import ABC, abstractmethod
 import time
 import logging
+import os
 from typing import Callable, Optional
 from playwright.sync_api import sync_playwright, Page, Browser
 from prometheus_client import Gauge, Counter
 
-# Configure logging
+# Configure logging based on DEBUG environment variable
 logger = logging.getLogger(__name__)
+debug_mode = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
+
+# Note: The actual log level is set in main.py/run_test.py
+# This just provides the debug_mode flag for conditional logging
 
 # METRICS DEFINITION
 TRANS_DURATION = Gauge(
@@ -56,13 +61,15 @@ class MonitorBase(ABC):
         Executes 'action' (callable), measures time, and records metrics.
         Raises exception on failure to stop the flow.
         """
-        logger.info(f"[{self.usecase_name}] Starting step: {step_name}")
+        if debug_mode:
+            logger.info(f"[{self.usecase_name}] Starting step: {step_name}")
         start_time = time.time()
         try:
             action()
             duration = time.time() - start_time
             TRANS_DURATION.labels(usecase=self.usecase_name, step=step_name).set(duration)
-            logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
+            if debug_mode:
+                logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
         except Exception:
             duration = time.time() - start_time
             logger.exception(f"[{self.usecase_name}] Step '{step_name}' FAILED")

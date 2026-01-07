@@ -56,8 +56,8 @@ class HiDriveNextPictureTest(MonitorBase):
             self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
             self.page.wait_for_load_state("networkidle", timeout=15000)
             
-            # Open picture using data-cy attribute (language-independent)
-            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] img').click(timeout=10000)
+            # Open picture - click on the row name to avoid canvas overlay issues
+            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] .files-list__row-name-text').click(timeout=10000)
             
             # Wait for image to fully load
             self.page.wait_for_load_state("networkidle", timeout=15000)

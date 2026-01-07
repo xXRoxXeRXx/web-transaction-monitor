@@ -46,8 +46,8 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
             # Click "Erstellen" using data-cy (language-independent)
             self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=10000)
             
-            # Wait for Collabora iframe to load
-            self.page.wait_for_selector('iframe[name^="collaboraframe"]', timeout=30000)
+            # Wait for Collabora iframe to load (can be slow in Docker/headless)
+            self.page.wait_for_selector('iframe[name^="collaboraframe"]', timeout=60000)
             
             # Get the iframe (use dynamic name detection)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')

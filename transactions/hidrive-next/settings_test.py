@@ -57,7 +57,8 @@ class HiDriveNextSettingsTest(MonitorBase):
             self.page.wait_for_load_state("networkidle", timeout=15000)
             
             # Navigate to Apps & Software using icon class (language-independent)
-            self.page.locator('a.app-navigation-entry-link:has(.desktop-classic-icon)').click(timeout=10000)
+            # Increased timeout as this can be slow in Docker/headless mode
+            self.page.locator('a.app-navigation-entry-link:has(.desktop-classic-icon)').click(timeout=20000)
             self.page.wait_for_load_state("networkidle", timeout=15000)
         
         self.measure_step("03_Navigate to Settings & Apps", navigate_to_settings_and_apps)

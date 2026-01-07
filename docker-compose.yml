@@ -1,8 +1,8 @@
 services:
   monitor-app:
     build: .
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     volumes:
       - ./transactions:/app/transactions
       - ./runners:/app/runners
@@ -27,8 +27,8 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=730d'
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]

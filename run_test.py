@@ -20,10 +20,14 @@ import os
 from pathlib import Path
 import importlib.util
 import logging
+import os
 
-# Configure logging
+# Configure logging - respect DEBUG environment variable
+debug_mode = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
+log_level = logging.INFO if debug_mode else logging.ERROR
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
