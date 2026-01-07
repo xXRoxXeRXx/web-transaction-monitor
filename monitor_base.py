@@ -42,6 +42,7 @@ class MonitorBase(ABC):
         """Initializes Playwright"""
         self.playwright = sync_playwright().start()
         self.browser = self.playwright.chromium.launch(headless=self.headless)
+        # Use default system locale for language-independent testing
         self.page = self.browser.new_page()
 
     def teardown(self) -> None:

@@ -24,21 +24,10 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 2: Login
         def login_logic():
-            # Robust Login with fallback locators
-            try:
-                self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username, timeout=10000)
-            except Exception:
-                self.page.locator('input[name="user"], #user').fill(username, timeout=5000)
-                
-            try:
-                self.page.get_by_role('textbox', name='Passwort').fill(password, timeout=10000)
-            except Exception:
-                self.page.locator('input[name="password"], #password').fill(password, timeout=5000)
-                
-            try:
-                self.page.get_by_role('button', name='Anmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('button[type="submit"], #submit').click(timeout=5000)
+            # Login using data attributes (language-independent)
+            self.page.locator('input[data-login-form-input-user]').fill(username, timeout=10000)
+            self.page.locator('input[data-login-form-input-password]').fill(password, timeout=10000)
+            self.page.locator('button[data-login-form-submit]').click(timeout=10000)
             
             # Wait for dashboard
             self.page.wait_for_selector(".files-list", timeout=30000)
@@ -47,23 +36,14 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 3: Create and edit document
         def create_document_logic():
-            # Click "Neu" button
-            try:
-                self.page.get_by_role('button', name='Neu').click(timeout=10000)
-            except Exception:
-                self.page.locator('button:has-text("Neu"), .button-vue:has-text("New")').click(timeout=5000)
+            # Click "Neu" button using class (language-independent)
+            self.page.locator('button.action-item__menutoggle:has(.plus-icon)').click(timeout=10000)
             
-            # Click "Neues Dokument"
-            try:
-                self.page.get_by_role('menuitem', name='Neues Dokument').click(timeout=10000)
-            except Exception:
-                self.page.locator('[role="menuitem"]:has-text("Dokument"), [role="menuitem"]:has-text("Document")').click(timeout=5000)
+            # Click "Neues Dokument" using data-cy (language-independent)
+            self.page.locator('[data-cy-upload-picker-menu-entry="template-new-richdocuments-1"]').click(timeout=10000)
             
-            # Click "Erstellen"
-            try:
-                self.page.get_by_role('button', name='Erstellen').click(timeout=10000)
-            except Exception:
-                self.page.locator('button:has-text("Erstellen"), button:has-text("Create")').click(timeout=5000)
+            # Click "Erstellen" using data-cy (language-independent)
+            self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=10000)
             
             # Wait for Collabora iframe to load
             self.page.wait_for_selector('iframe[name^="collaboraframe"]', timeout=30000)
@@ -82,13 +62,9 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 4: Close document
         def close_document_logic():
-            # Close document in Collabora
+            # Close document in Collabora using ID (language-independent)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
-            try:
-                iframe_locator.get_by_role('button', name='Dokument schließen').click(timeout=10000)
-            except Exception:
-                # Fallback to close button locator
-                iframe_locator.locator('button[title*="schließen"], button[title*="Close"]').click(timeout=5000)
+            iframe_locator.locator('button#closebutton').click(timeout=10000)
             
             # Wait for return to file list
             self.page.wait_for_selector('.files-list', timeout=10000)
@@ -97,18 +73,11 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 5: Delete document
         def delete_document_logic():
-            # Click actions menu for the new document
-            try:
-                self.page.get_by_role('row', name='Auswahl für die Datei "Neues').get_by_label('Aktionen').click(timeout=10000)
-            except Exception:
-                # Fallback: find first file with "Neues" or "New" in name
-                self.page.locator('[data-cy-files-list-row]:has-text("Neues"), [data-cy-files-list-row]:has-text("New")').locator('button[aria-label*="Aktionen"], button[aria-label*="Actions"]').first.click(timeout=5000)
+            # Click actions menu for the document (language-independent)
+            self.page.locator('tr[data-cy-files-list-row]:has-text("Neues") button.action-item__menutoggle').first.click(timeout=10000)
             
-            # Click delete
-            try:
-                self.page.get_by_role('menuitem', name='Datei löschen').click(timeout=10000)
-            except Exception:
-                self.page.locator('[role="menuitem"]:has-text("löschen"), [role="menuitem"]:has-text("Delete")').click(timeout=5000)
+            # Click delete using data-cy (language-independent)
+            self.page.locator('[data-cy-files-list-row-action="delete"]').click(timeout=10000)
             
             # Wait for deletion to complete
             self.page.wait_for_timeout(1000)
@@ -117,12 +86,9 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 6: Logout
         def logout_logic():
-            try:
-                self.page.get_by_role('button', name='Einstellungen-Menü').click(timeout=5000)
-                self.page.get_by_role('link', name='Abmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('#settings, .settings-menu').click(timeout=5000)
-                self.page.locator('#logout, .logout-link').click(timeout=10000)
+            # Open settings menu and logout using IDs (language-independent)
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=5000)
+            self.page.locator('a#logout').click(timeout=10000)
 
         self.measure_step("06_Logout", logout_logic)
 

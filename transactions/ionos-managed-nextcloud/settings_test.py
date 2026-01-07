@@ -24,22 +24,10 @@ class IonosManagedNextcloudSettingsTest(MonitorBase):
 
         # Step 2: Cookie & Login
         def login_logic():
-            # Robust Login (Using the recorded roles with fallback to IDs if possible)
-            try:
-                self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username, timeout=10000)
-            except Exception:
-                # Fallback to broad locator if role name differs by language
-                self.page.locator('input[name="user"], #user').fill(username, timeout=5000)
-                
-            try:
-                self.page.get_by_role('textbox', name='Passwort').fill(password, timeout=10000)
-            except Exception:
-                self.page.locator('input[name="password"], #password').fill(password, timeout=5000)
-                
-            try:
-                self.page.get_by_role('button', name='Anmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('button[type="submit"], #submit').click(timeout=5000)
+            # Login using data attributes (language-independent)
+            self.page.locator('input[data-login-form-input-user]').fill(username, timeout=10000)
+            self.page.locator('input[data-login-form-input-password]').fill(password, timeout=10000)
+            self.page.locator('button[data-login-form-submit]').click(timeout=10000)
             
             # Wait for dashboard
             self.page.wait_for_selector(".files-list", timeout=30000)
@@ -48,24 +36,14 @@ class IonosManagedNextcloudSettingsTest(MonitorBase):
 
         # Step 3: Open settings menu and navigate to Security
         def navigate_to_settings_and_security():
-            # Open settings menu
-            try:
-                self.page.get_by_role('button', name='Einstellungen-Menü').click(timeout=10000)
-            except Exception:
-                self.page.locator('button#settings, .settings-menu').click(timeout=5000)
+            # Open settings menu using ID (language-independent)
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=10000)
             
-            # Navigate to Personal Settings using the specific ID
-            try:
-                self.page.locator('a#settings[href*="/settings/user"]').click(timeout=10000)
-            except Exception:
-                # Fallback to text-based selector
-                self.page.get_by_role('link', name='Persönliche Einstellungen').click(timeout=5000)
+            # Navigate to Personal Settings using ID (language-independent)
+            self.page.locator('a#settings').click(timeout=10000)
             
-            # Navigate to Security
-            try:
-                self.page.get_by_role('link', name='Sicherheit').click(timeout=10000)
-            except Exception:
-                self.page.locator('a:has-text("Sicherheit"), a:has-text("Security"), a[href*="security"]').first.click(timeout=5000)
+            # Navigate to Security - use href to distinguish between user and admin security (language-independent)
+            self.page.locator('li[data-section-id="security"] a[href*="/settings/user/security"]').click(timeout=10000)
             
             # Wait for security page to load
             self.page.wait_for_load_state("networkidle", timeout=15000)
@@ -74,10 +52,8 @@ class IonosManagedNextcloudSettingsTest(MonitorBase):
 
         # Step 4: Go back to files
         def go_back_to_files():
-            try:
-                self.page.get_by_role('link', name='Dateien aufrufen').click(timeout=10000)
-            except Exception:
-                self.page.locator('a:has-text("Dateien aufrufen"), a:has-text("Access files"), a[href*="files"]').click(timeout=5000)
+            # Go back to files using ID (language-independent)
+            self.page.locator('a#nextcloud').click(timeout=10000)
             
             # Wait for files page to load
             self.page.wait_for_load_state("networkidle", timeout=15000)
@@ -86,17 +62,9 @@ class IonosManagedNextcloudSettingsTest(MonitorBase):
 
         # Step 5: Logout
         def logout():
-            # Open settings menu
-            try:
-                self.page.get_by_role('button', name='Einstellungen-Menü').click(timeout=10000)
-            except Exception:
-                self.page.locator('button#settings, .settings-menu').click(timeout=5000)
-            
-            # Logout
-            try:
-                self.page.get_by_role('link', name='Abmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('a:has-text("Abmelden"), a:has-text("Logout"), #logout').click(timeout=5000)
+            # Open settings menu and logout using IDs (language-independent)
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=10000)
+            self.page.locator('a#logout').click(timeout=10000)
 
         self.measure_step("05_Logout", logout)
 

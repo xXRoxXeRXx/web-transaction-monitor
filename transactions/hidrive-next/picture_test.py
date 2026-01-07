@@ -51,8 +51,8 @@ class HiDriveNextPictureTest(MonitorBase):
             # Click folder 'norway'
             self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
             
-            # Open picture
-            self.page.get_by_role('row', name='Auswahl für die Datei "abhishek-umrao-qsvNYg6iMGk-unsplash.jpg" umschalten').locator('img').click(timeout=10000)
+            # Open picture using data-cy attribute (language-independent)
+            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] img').click(timeout=10000)
             
             # Wait for image to fully load
             self.page.wait_for_load_state("networkidle", timeout=10000)
@@ -61,12 +61,12 @@ class HiDriveNextPictureTest(MonitorBase):
 
         # Step 4: Close and Logout
         def logout_logic():
-            # Close Preview
-            self.page.get_by_role('button', name='Close', exact=True).click(timeout=5000)
+            # Close Preview using class and aria-label (language-independent)
+            self.page.locator('button.header-close[aria-label="Close"]').click(timeout=5000)
             
-            # Logout
-            self.page.get_by_role('button', name='User Menu').click(timeout=5000)
-            self.page.get_by_role('link', name='Abmelden').click(timeout=5000)
+            # Logout using data-qa attributes (language-independent)
+            self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=5000)
+            self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-LOGOUT-TARGET"]').click(timeout=5000)
 
         self.measure_step("04_Close and Logout", logout_logic)
 

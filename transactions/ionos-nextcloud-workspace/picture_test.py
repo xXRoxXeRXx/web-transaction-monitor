@@ -24,22 +24,10 @@ class IonosNextcloudWorkspacePictureTest(MonitorBase):
 
         # Step 2: Cookie & Login
         def login_logic():
-            # Robust Login (Using the recorded roles with fallback to IDs if possible)
-            try:
-                self.page.get_by_role('textbox', name='Kontoname oder E-Mail-Adresse').fill(username, timeout=10000)
-            except Exception:
-                # Fallback to broad locator if role name differs by language
-                self.page.locator('input[name="user"], #user').fill(username, timeout=5000)
-                
-            try:
-                self.page.get_by_role('textbox', name='Passwort').fill(password, timeout=10000)
-            except Exception:
-                self.page.locator('input[name="password"], #password').fill(password, timeout=5000)
-                
-            try:
-                self.page.get_by_role('button', name='Anmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('button[type="submit"], #submit').click(timeout=5000)
+            # Login using data attributes (language-independent)
+            self.page.locator('input[data-login-form-input-user]').fill(username, timeout=10000)
+            self.page.locator('input[data-login-form-input-password]').fill(password, timeout=10000)
+            self.page.locator('button[data-login-form-submit]').click(timeout=10000)
             
             # Wait for dashboard
             self.page.wait_for_selector(".files-list", timeout=30000)
@@ -54,8 +42,8 @@ class IonosNextcloudWorkspacePictureTest(MonitorBase):
             # Click folder 'norway'
             self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
             
-            # Open picture
-            self.page.get_by_role('row', name='Auswahl für die Datei "abhishek-umrao-qsvNYg6iMGk-unsplash.jpg" umschalten').locator('img').click(timeout=10000)
+            # Open picture using data-cy attribute (language-independent)
+            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] img').click(timeout=10000)
             
             # Wait for image to fully load
             self.page.wait_for_load_state("networkidle", timeout=10000)
@@ -64,19 +52,12 @@ class IonosNextcloudWorkspacePictureTest(MonitorBase):
 
         # Step 4: Close and Logout
         def logout_logic():
-            # Close Preview
-            try:
-                self.page.get_by_role('button', name='Schließen', exact=True).click(timeout=5000)
-            except Exception:
-                self.page.locator('button.close, [aria-label="Close"]').click(timeout=5000)
+            # Close Preview using class (language-independent)
+            self.page.locator('button.header-close').click(timeout=5000)
             
-            # Logout
-            try:
-                self.page.get_by_role('button', name='Einstellungen-Menü').click(timeout=5000)
-                self.page.get_by_role('link', name='Abmelden').click(timeout=10000)
-            except Exception:
-                self.page.locator('#settings, .settings-menu').click(timeout=5000)
-                self.page.locator('#logout, .logout-link').click(timeout=10000)
+            # Logout using ID (language-independent)
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=5000)
+            self.page.locator('a#logout').click(timeout=10000)
 
         self.measure_step("04_Close and Logout", logout_logic)
 
