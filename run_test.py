@@ -26,12 +26,20 @@ import os
 
 # Configure logging - respect DEBUG environment variable
 debug_mode = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
-log_level = logging.INFO if debug_mode else logging.ERROR
 
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+if debug_mode:
+    # DEBUG mode: Show everything
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+else:
+    # Production mode: Only show transaction START/SUCCESS/FAILED
+    logging.basicConfig(
+        level=logging.ERROR,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logging.getLogger('monitor_base').setLevel(logging.INFO)
 
 # Add project root to Python path
 project_root = Path(__file__).parent

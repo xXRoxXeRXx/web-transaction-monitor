@@ -72,7 +72,8 @@ class MonitorBase(ABC):
                 logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
         except Exception:
             duration = time.time() - start_time
-            logger.exception(f"[{self.usecase_name}] Step '{step_name}' FAILED")
+            # Always log errors, regardless of DEBUG mode
+            logger.error(f"[{self.usecase_name}] Step '{step_name}' FAILED after {duration:.2f}s", exc_info=True)
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()
             raise
 
@@ -80,14 +81,19 @@ class MonitorBase(ABC):
         """
         Full execution wrapper: Setup -> Run -> Teardown -> Record Success/Fail
         """
+        # Always log start of transaction
+        logger.info(f"[{self.usecase_name}] Transaction START")
         TRANS_LAST_RUN.labels(usecase=self.usecase_name).set_to_current_time()
         success = False
         try:
             self.setup()
             self.run()
             success = True
+            # Always log successful completion
+            logger.info(f"[{self.usecase_name}] Transaction SUCCESS")
         except Exception:
-            logger.exception(f"[{self.usecase_name}] Transaction FAILED") 
+            # Always log failures
+            logger.error(f"[{self.usecase_name}] Transaction FAILED", exc_info=True)
         finally:
             self.teardown()
             TRANS_SUCCESS.labels(usecase=self.usecase_name).set(1 if success else 0)

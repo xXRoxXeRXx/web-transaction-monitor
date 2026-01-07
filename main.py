@@ -15,13 +15,22 @@ CHECK_INTERVAL_SECONDS = int(os.getenv('SCHEDULE_INTERVAL', 300)) # Default 5 mi
 
 # Logging - respect DEBUG environment variable
 debug_mode = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
-log_level = logging.INFO if debug_mode else logging.ERROR
 
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logging.getLogger('monitor_base').setLevel(log_level)
+if debug_mode:
+    # DEBUG mode: Show everything
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+else:
+    # Production mode: Only show transaction START/SUCCESS/FAILED (from monitor_base)
+    logging.basicConfig(
+        level=logging.ERROR,  # Suppress most logs
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    # But allow monitor_base to log at INFO level for transactions
+    logging.getLogger('monitor_base').setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 def load_and_schedule_usecases(scheduler: BackgroundScheduler) -> None:
