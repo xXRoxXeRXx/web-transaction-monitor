@@ -11,6 +11,8 @@ Usage:
     python run_test.py nextcloud-workspace-settings # Run Nextcloud Workspace Settings Test
     python run_test.py nextcloud-workspace-document # Run Nextcloud Workspace Document Test
     python run_test.py managed-nextcloud            # Run IONOS Managed Nextcloud Picture Test
+    python run_test.py managed-nextcloud-settings   # Run IONOS Managed Nextcloud Settings Test
+    python run_test.py managed-nextcloud-document   # Run IONOS Managed Nextcloud Document Test
     python run_test.py all                          # Run all tests sequentially
 """
 import sys
@@ -88,6 +90,16 @@ TESTS = {
         'dir': 'ionos-managed-nextcloud',
         'file': 'picture_test.py',
         'class': 'IonosManagedNextcloudPictureTest',
+    },
+    'managed-nextcloud-settings': {
+        'dir': 'ionos-managed-nextcloud',
+        'file': 'settings_test.py',
+        'class': 'IonosManagedNextcloudSettingsTest',
+    },
+    'managed-nextcloud-document': {
+        'dir': 'ionos-managed-nextcloud',
+        'file': 'document_test.py',
+        'class': 'IonosManagedNextcloudDocumentTest',
     }
 }
 
