@@ -42,14 +42,39 @@ This tool records step-level execution times for web transactions and visualizes
 
 ## Quick Start
 
-### 1. Start the Stack
+### 1. Clone and Configure
+
+```bash
+git clone https://github.com/xXRoxXeRXx/web-transaction-monitor.git
+cd web-transaction-monitor
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+### 2. Start the Stack
+
 ```bash
 docker-compose up -d --build
 ```
 
-### 2. Access the Tools
-- **Grafana**: [http://localhost:3000](http://localhost:3000) (Admin / admin)
+### 3. Access the Tools
+
+- **Grafana**: [http://localhost:3000](http://localhost:3000) (Default: admin / admin)
+- **Prometheus**: [http://localhost:9090](http://localhost:9090)
 - **Metrics (Prometheus format)**: [http://localhost:8000/metrics](http://localhost:8000/metrics)
+
+### 4. Update Deployment
+
+```bash
+# Pull latest changes
+git pull
+
+# Restart with new code (volumes are mounted, no rebuild needed)
+docker-compose restart web-monitor-app
+
+# Or rebuild everything if Dockerfile changed
+docker-compose up -d --build
+```
 
 ---
 
@@ -126,6 +151,20 @@ python run_test.py your-test-name
 
 Always prefix your step names with numbers (e.g., `01_`, `02_`). This ensures that Grafana displays them in the correct chronological order instead of alphabetically.
 
+### 6. Best Practices
+
+**Timeouts:**
+
+- Use `wait_for_load_state("networkidle", timeout=30000)` for navigation (modern web apps need time due to WebSockets, polling, analytics)
+- Use `wait_for_selector()` with 30s timeout for critical UI elements
+- For iframes (e.g., Collabora), use 60s timeout for initial load, 30s for interactions
+
+**Selectors:**
+
+- Prefer language-independent selectors: `data-qa`, `data-cy`, `id`, `aria-label`
+- Avoid text-based selectors that break with translations
+- Use specific selectors to avoid ambiguity
+
 ## Configuration
 
 Environment variables in `docker-compose.yml`:
@@ -136,7 +175,7 @@ Environment variables in `docker-compose.yml`:
 
 Platform credentials are configured in `.env` file (copy from `.env.example`).
 
-##  Metrics
+## Metrics
 
 The system exports the following Prometheus metrics:
 
@@ -146,6 +185,14 @@ The system exports the following Prometheus metrics:
 
 Access Grafana dashboards at `http://localhost:3000` (default credentials: admin/admin).
 
+## Container Names
+
+The stack uses project-specific container names to avoid conflicts:
+
+- `web-monitor-app` - Main monitoring application
+- `web-monitor-prometheus` - Metrics collection
+- `web-monitor-grafana` - Visualization dashboard
+
 ---
 
-**Made with ❤️ for reliable web monitoring**
+Made with ❤️ for reliable web monitoring
