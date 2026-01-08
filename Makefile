@@ -43,10 +43,10 @@ docker-down:
 	docker-compose down
 
 docker-logs:
-	docker-compose logs -f monitor-app
+	docker-compose logs -f web-monitor-app
 
 docker-restart:
-	docker-compose restart monitor-app
+	docker-compose restart web-monitor-app
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
