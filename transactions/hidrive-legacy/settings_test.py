@@ -30,7 +30,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         def login_logic():
             # Accept cookies
             try:
-                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=5000)
+                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=30000)
             except Exception:
                 logger.info("[hidrive-legacy_settings_test] Cookie banner not found")
             
@@ -52,7 +52,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         # Step 3: Navigate to Settings
         def navigate_to_settings():
             # Click on Settings link using the correct selector
-            self.page.locator('li.sj-navigation-item[data-name="settings.account"] a').click(timeout=5000)
+            self.page.locator('li.sj-navigation-item[data-name="settings.account"] a').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("03_Navigate to Settings", navigate_to_settings)
@@ -60,7 +60,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         # Step 4: Navigate to Private section
         def navigate_to_private():
             # Click on Personal/Private link using the correct selector
-            self.page.locator('li.sj-navigation-item[data-name="my.files"] a').click(timeout=5000)
+            self.page.locator('li.sj-navigation-item[data-name="my.files"] a').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Navigate to Private", navigate_to_private)

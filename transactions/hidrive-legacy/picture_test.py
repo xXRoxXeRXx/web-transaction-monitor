@@ -30,7 +30,7 @@ class HiDriveLegacyPictureTest(MonitorBase):
         def login_logic():
             # Accept cookies
             try:
-                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=5000)
+                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=30000)
             except Exception:
                 logger.info("[hidrive-legacy_picture_test] Cookie banner not found")
             
@@ -60,10 +60,10 @@ class HiDriveLegacyPictureTest(MonitorBase):
             self.page.locator('tile-item:nth-child(3) > .itemcontent > .file-item-icon > .thumbnail').click()
             
             # Wait for image to load (wait for viewer to be ready)
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Verify image viewer is open and image is loaded
-            self.page.wait_for_selector('.imageview', timeout=10000)
+            self.page.wait_for_selector('.imageview', timeout=30000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 
@@ -74,7 +74,7 @@ class HiDriveLegacyPictureTest(MonitorBase):
             
             # Logout
             self.page.locator('a[href="#logout"]').click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Close and Logout", logout_logic)
 

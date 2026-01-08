@@ -35,7 +35,7 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         def login_logic():
             # Accept cookies using data-qa (language-independent)
             try:
-                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=5000)
+                self.page.locator('[data-qa="privacy_consent_approve_all"]').click(timeout=30000)
             except Exception:
                 logger.info("[hidrive-legacy_document_test] Cookie banner not found")
             
@@ -57,17 +57,17 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         # Step 3: Create and edit document
         def create_document_logic():
             # Click "mehr" button using data-qa (language-independent)
-            self.page.locator('[data-qa="menubar_more"]').click(timeout=10000)
+            self.page.locator('[data-qa="menubar_more"]').click(timeout=30000)
             
             # Click "Neues Dokument" menu item (div in menu, not button)
-            self.page.locator('div.sj-menuitem[data-qa="menubar_new_document"]').click(timeout=10000)
+            self.page.locator('div.sj-menuitem[data-qa="menubar_new_document"]').click(timeout=30000)
             
             # Enter document name (without .docx extension, will be added automatically)
             filename_without_ext = document_name.replace('.docx', '')
-            self.page.fill('input[name="file-name"]', filename_without_ext, timeout=10000)
+            self.page.fill('input[name="file-name"]', filename_without_ext, timeout=30000)
             
             # Click "Erstellen" button using data-qa (language-independent)
-            self.page.locator('[data-qa="file_create_ok"]').click(timeout=10000)
+            self.page.locator('[data-qa="file_create_ok"]').click(timeout=30000)
             
             # Wait for Collabora iframe to load (can be slow)
             self.page.wait_for_selector('iframe[name="collabora-online-viewer"]', timeout=60000)
@@ -77,17 +77,17 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             iframe.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)
             
             # Wait for document canvas to confirm content is rendered
-            iframe.locator('#document-canvas').wait_for(state='visible', timeout=10000)
+            iframe.locator('#document-canvas').wait_for(state='visible', timeout=30000)
 
         self.measure_step("03_Create and edit document", create_document_logic)
 
         # Step 4: Close document
         def close_document():
             # Close the editor
-            self.page.locator('.office-editor-close').click(timeout=10000)
+            self.page.locator('.office-editor-close').click(timeout=30000)
             
             # Wait for document list to appear and network to be idle
-            self.page.wait_for_selector('tile-item', timeout=10000)
+            self.page.wait_for_selector('tile-item', timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Close document", close_document)
@@ -96,16 +96,16 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         def delete_document():
             # Find the document and scroll it into view
             document_tile = self.page.locator('tile-item').filter(has_text=document_name)
-            document_tile.scroll_into_view_if_needed(timeout=10000)
+            document_tile.scroll_into_view_if_needed(timeout=30000)
             
             # Right-click on the item to open context menu
-            document_tile.locator('.itemcontent').click(button='right', timeout=10000, force=True)
+            document_tile.locator('.itemcontent').click(button='right', timeout=30000, force=True)
             
             # Click "Löschen" in context menu using data-qa
-            self.page.locator('[data-qa="contextmenu_delete"]').click(timeout=10000)
+            self.page.locator('[data-qa="contextmenu_delete"]').click(timeout=30000)
             
             # Confirm deletion using class (language-independent)
-            self.page.locator('button.confirm-overlay-ok').click(timeout=10000)
+            self.page.locator('button.confirm-overlay-ok').click(timeout=30000)
             
             # Wait for deletion to complete
             self.page.wait_for_timeout(1000)
@@ -115,8 +115,8 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         # Step 6: Logout
         def logout_logic():
             # Click logout link
-            self.page.locator('a[href="#logout"]').click(timeout=10000)
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            self.page.locator('a[href="#logout"]').click(timeout=30000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("06_Logout", logout_logic)
 

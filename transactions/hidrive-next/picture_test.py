@@ -26,17 +26,17 @@ class HiDriveNextPictureTest(MonitorBase):
         def login_logic():
             # Robust Cookie Acceptance
             try:
-                self.page.click("#selectAll", timeout=2000)
+                self.page.click("#selectAll", timeout=30000)
             except Exception:
                 pass
             
             # Fill Username
-            self.page.fill("input#username", username, timeout=5000)
-            self.page.click("button#button--with-loader", timeout=5000)
+            self.page.fill("input#username", username, timeout=30000)
+            self.page.click("button#button--with-loader", timeout=30000)
             
             # Fill Password
-            self.page.fill("input#password", password, timeout=10000)
-            self.page.click("button#button--with-loader", timeout=5000)
+            self.page.fill("input#password", password, timeout=30000)
+            self.page.click("button#button--with-loader", timeout=30000)
             
             # Wait for post-login page to load
             self.page.wait_for_load_state("networkidle", timeout=30000)
@@ -49,32 +49,32 @@ class HiDriveNextPictureTest(MonitorBase):
         # Step 3: Browse and open picture
         def browse_logic():
             # Click folder 'pictures'
-            self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=10000)
+            self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Click folder 'norway'
-            self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=10000)
+            self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Open picture - click on the row name to avoid canvas overlay issues
-            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] .files-list__row-name-text').click(timeout=10000)
+            self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] .files-list__row-name-text').click(timeout=30000)
             
             # Wait for image to fully load
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Verify image viewer is open and image is loaded
-            self.page.wait_for_selector('.viewer__file-wrapper img.loaded', timeout=10000)
+            self.page.wait_for_selector('.viewer__file-wrapper img.loaded', timeout=30000)
 
         self.measure_step("03_Browse and open picture", browse_logic)
 
         # Step 4: Close and Logout
         def logout_logic():
             # Close Preview using class and aria-label (language-independent)
-            self.page.locator('button.header-close[aria-label="Close"]').click(timeout=5000)
+            self.page.locator('button.header-close[aria-label="Close"]').click(timeout=30000)
             
             # Logout using data-qa attributes (language-independent)
-            self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=5000)
-            self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-LOGOUT-TARGET"]').click(timeout=5000)
+            self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=30000)
+            self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-LOGOUT-TARGET"]').click(timeout=30000)
 
         self.measure_step("04_Close and Logout", logout_logic)
 

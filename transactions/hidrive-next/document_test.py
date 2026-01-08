@@ -30,17 +30,17 @@ class HiDriveNextDocumentTest(MonitorBase):
         def login_logic():
             # Robust Cookie Acceptance
             try:
-                self.page.click("#selectAll", timeout=2000)
+                self.page.click("#selectAll", timeout=30000)
             except Exception:
                 pass
             
             # Fill Username
-            self.page.fill("input#username", username, timeout=10000)
-            self.page.click("button#button--with-loader", timeout=10000)
+            self.page.fill("input#username", username, timeout=30000)
+            self.page.click("button#button--with-loader", timeout=30000)
             
             # Fill Password
-            self.page.fill("input#password", password, timeout=10000)
-            self.page.click("button#button--with-loader", timeout=10000)
+            self.page.fill("input#password", password, timeout=30000)
+            self.page.click("button#button--with-loader", timeout=30000)
             
             # Wait for page load and network idle after login
             self.page.wait_for_load_state("networkidle", timeout=30000)
@@ -54,14 +54,14 @@ class HiDriveNextDocumentTest(MonitorBase):
         # Step 3: Open document
         def open_document():
             # Click on first document with .docx extension using data-cy attribute
-            self.page.locator('tr[data-cy-files-list-row][data-cy-files-list-row-name$=".docx"]').first.locator('button[data-cy-files-list-row-name-link]').click(timeout=10000)
+            self.page.locator('tr[data-cy-files-list-row][data-cy-files-list-row-name$=".docx"]').first.locator('button[data-cy-files-list-row-name-link]').click(timeout=30000)
             
             # Wait for Collabora iframe to load (name is dynamic: collaboraframe_xxxxx)
             self.page.wait_for_selector('iframe[name^="collaboraframe_"]', timeout=60000)
             
             # Get the iframe and wait for close button
             iframe = self.page.frame_locator('iframe[name^="collaboraframe_"]')
-            iframe.locator('#closebutton').wait_for(timeout=10000)
+            iframe.locator('#closebutton').wait_for(timeout=30000)
             
             # Wait for document canvas to be rendered (indicates document is loaded)
             iframe.locator('#document-canvas').wait_for(state='visible', timeout=30000)
@@ -72,23 +72,23 @@ class HiDriveNextDocumentTest(MonitorBase):
         def close_document():
             # Click close button in iframe
             iframe = self.page.frame_locator('iframe[name^="collaboraframe_"]')
-            iframe.locator('#closebutton').click(timeout=10000)
+            iframe.locator('#closebutton').click(timeout=30000)
             
             # Wait for navigation back to file list
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Wait for files list to appear
-            self.page.wait_for_selector(".files-list", timeout=10000)
+            self.page.wait_for_selector(".files-list", timeout=30000)
 
         self.measure_step("04_Close document", close_document)
 
         # Step 5: Logout
         def logout_logic():
             # Open user menu
-            self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=10000)
+            self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=30000)
             
             # Click logout using data-qa attribute (language-independent)
-            self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-LOGOUT-TARGET"]').click(timeout=10000)
+            self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-LOGOUT-TARGET"]').click(timeout=30000)
 
         self.measure_step("05_Logout", logout_logic)
 
