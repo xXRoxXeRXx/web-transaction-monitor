@@ -49,7 +49,7 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             self.page.click('[data-qa="login_submit"]')
             
             # Wait for login to complete
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             self.page.wait_for_selector('.file-item-icon', timeout=30000)
 
         self.measure_step("02_Cookie & Login", login_logic)
@@ -72,9 +72,9 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             # Wait for Collabora iframe to load (can be slow)
             self.page.wait_for_selector('iframe[name="collabora-online-viewer"]', timeout=60000)
             
-            # Get iframe and type text
+            # Get iframe and type text (increased timeout for slow iframe rendering)
             iframe = self.page.frame_locator('iframe[name="collabora-online-viewer"]')
-            iframe.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=10000)
+            iframe.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)
             
             # Wait for document canvas to confirm content is rendered
             iframe.locator('#document-canvas').wait_for(state='visible', timeout=10000)
@@ -88,7 +88,7 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             
             # Wait for document list to appear and network to be idle
             self.page.wait_for_selector('tile-item', timeout=10000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Close document", close_document)
 

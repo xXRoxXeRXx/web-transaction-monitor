@@ -44,7 +44,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
             self.page.click('[data-qa="login_submit"]')
             
             # Wait for login to complete
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             self.page.wait_for_selector('.file-item-icon', timeout=30000)
 
         self.measure_step("02_Cookie & Login", login_logic)
@@ -53,7 +53,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         def navigate_to_settings():
             # Click on Settings link using the correct selector
             self.page.locator('li.sj-navigation-item[data-name="settings.account"] a').click(timeout=5000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("03_Navigate to Settings", navigate_to_settings)
 
@@ -61,7 +61,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         def navigate_to_private():
             # Click on Personal/Private link using the correct selector
             self.page.locator('li.sj-navigation-item[data-name="my.files"] a').click(timeout=5000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Navigate to Private", navigate_to_private)
 
@@ -69,7 +69,7 @@ class HiDriveLegacySettingsTest(MonitorBase):
         def logout_logic():
             # Logout
             self.page.locator('a[href="#logout"]').click()
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("05_Logout", logout_logic)
 

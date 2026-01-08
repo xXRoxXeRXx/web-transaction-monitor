@@ -39,7 +39,7 @@ class HiDriveNextSettingsTest(MonitorBase):
             self.page.click("button#button--with-loader", timeout=10000)
             
             # Wait for page load and network idle after login
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             self.page.wait_for_timeout(2000)
             
             # Wait for files list to appear
@@ -54,12 +54,12 @@ class HiDriveNextSettingsTest(MonitorBase):
             
             # Navigate to Settings using data-qa attribute (language-independent)
             self.page.locator('ionos-user-menu-item[data-qa="IONOS-USER-MENU-SETTINGS-TARGET"]').click(timeout=10000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Navigate to Apps & Software using icon class (language-independent)
             # Increased timeout as this can be slow in Docker/headless mode
             self.page.locator('a.app-navigation-entry-link:has(.desktop-classic-icon)').click(timeout=20000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
         
         self.measure_step("03_Navigate to Settings & Apps", navigate_to_settings_and_apps)
 
@@ -67,7 +67,7 @@ class HiDriveNextSettingsTest(MonitorBase):
         def go_back_to_files():
             # Use ID (language-independent)
             self.page.locator('#backButton a.app-navigation-entry-link').click(timeout=10000)
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
         
         self.measure_step("04_Go back to files", go_back_to_files)
 

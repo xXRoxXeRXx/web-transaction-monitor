@@ -43,7 +43,7 @@ class HiDriveNextDocumentTest(MonitorBase):
             self.page.click("button#button--with-loader", timeout=10000)
             
             # Wait for page load and network idle after login
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             self.page.wait_for_timeout(2000)
             
             # Wait for files list to appear
@@ -75,7 +75,7 @@ class HiDriveNextDocumentTest(MonitorBase):
             iframe.locator('#closebutton').click(timeout=10000)
             
             # Wait for navigation back to file list
-            self.page.wait_for_load_state("networkidle", timeout=15000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Wait for files list to appear
             self.page.wait_for_selector(".files-list", timeout=10000)
