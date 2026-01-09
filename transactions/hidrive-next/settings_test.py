@@ -67,13 +67,13 @@ class HiDriveNextSettingsTest(MonitorBase):
                     
                     logger.info(f"URL after second submit: {self.page.url}")
             
-            # Now wait for password field to appear
-            password_field = self.page.locator("input#password, input[type='password']")
+            # Now wait for password field to appear (exclude hidden honeypot field)
+            password_field = self.page.locator("input#password:not(.hidden), input[type='password']:not(.hidden):not([name='hiddenPassword'])")
             password_field.first.wait_for(state="visible", timeout=30000)
             
             # Fill password and submit
             logger.info("Password field visible - filling password")
-            self.page.fill("input#password, input[type='password']", password)
+            self.page.fill("input#password:not(.hidden), input[type='password']:not(.hidden):not([name='hiddenPassword'])", password)
             self.page.click("button#button--with-loader", timeout=30000)
             
             # Wait for post-login page to load
