@@ -44,6 +44,7 @@ class MagentaCloudPictureTest(MonitorBase):
             # Submit password (scale-button)
             self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
 
+            # Wait for navigation after password submit
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Check for OIDC error and retry if needed
@@ -56,7 +57,14 @@ class MagentaCloudPictureTest(MonitorBase):
             except Exception:
                 pass
             
-            self.page.wait_for_selector('.files-list', timeout=30000)
+            # Wait for files list with multiple possible selectors
+            try:
+                self.page.wait_for_selector('.files-list', timeout=30000)
+            except Exception as e:
+                # Try alternative selector or log current URL for debugging
+                logger.error(f"Files list not found. Current URL: {self.page.url}")
+                # Try waiting for the file list wrapper
+                self.page.wait_for_selector('[data-cy-files-list]', timeout=10000)
 
         self.measure_step("02_Cookie & Login", login_logic)
 
