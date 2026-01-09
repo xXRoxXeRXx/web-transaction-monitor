@@ -30,61 +30,54 @@ class HiDriveNextSettingsTest(MonitorBase):
             except Exception:
                 pass
             
-            # Fill Username
-            username_field = self.page.locator("input#username")
-            username_field.wait_for(state="visible", timeout=30000)
-            self.page.fill("input#username", username)
+            # Fill Username (initial page)
+            username_field = self.page.locator("input#username, input[type='email'][name='identifier']")
+            username_field.first.wait_for(state="visible", timeout=30000)
             
-            # Click submit and wait for navigation
+            # Get the current URL before clicking
+            url_before_click = self.page.url
+            logger.info(f"URL before username submit: {url_before_click}")
+            
+            # Fill and submit username
+            self.page.fill("input#username, input[type='email'][name='identifier']", username)
             self.page.click("button#button--with-loader", timeout=30000)
-            self.page.wait_for_load_state("networkidle", timeout=30000)
             
-            # Check which page we landed on after username submit
-            current_url = self.page.url
+            # Wait for page to respond to the click
+            self.page.wait_for_load_state("domcontentloaded", timeout=30000)
+            self.page.wait_for_timeout(1500)  # Give page time to process
             
-            # Try to detect if password field is already visible (normal flow)
-            password_field = self.page.locator("input#password")
-            try:
-                password_field.wait_for(state="visible", timeout=3000)
-                # Normal flow: password field appeared on same page
-                logger.info("Normal login flow - password field visible")
-                self.page.fill("input#password", password)
-                self.page.click("button#button--with-loader", timeout=30000)
-            except Exception:
-                # Password field not visible - check if redirected to IONOS ID
-                if "id.ionos.fr" in current_url or "id.ionos.de" in current_url or "id.ionos.com" in current_url:
-                    logger.info("Detected redirect to IONOS ID login page")
+            # Check what happened after the click
+            url_after_click = self.page.url
+            logger.info(f"URL after username submit: {url_after_click}")
+            
+            # Check if we're still on an IONOS ID page (email input page)
+            if "/identifier" in url_after_click or "id.ionos" in url_after_click:
+                # We're on IONOS ID page - check if username field is still there
+                email_field_visible = self.page.locator("input#username, input[type='email'][name='identifier']").is_visible()
+                
+                if email_field_visible:
+                    # Email field still visible - this means we redirected to IONOS but form wasn't submitted
+                    logger.info("Detected IONOS ID redirect - username field still visible, resubmitting")
                     
-                    # On IONOS ID page, we MUST fill the username field
-                    # Even if it appears hidden or pre-filled, we need to ensure it has a value
-                    username_field_ionos = self.page.locator("input#username, input[type='email']")
-                    username_field_ionos.first.wait_for(state="attached", timeout=5000)
-                    
-                    # Force fill the username
-                    logger.info("Filling username on IONOS ID page")
-                    self.page.fill("input#username", username)
-                    
-                    # Click continue button and wait for navigation
-                    logger.info(f"Current URL before continue: {self.page.url}")
+                    # Fill username again and click
+                    self.page.fill("input#username, input[type='email'][name='identifier']", username)
                     self.page.click("button#button--with-loader", timeout=30000)
-                    self.page.wait_for_load_state("networkidle", timeout=30000)
-                    logger.info(f"Current URL after continue: {self.page.url}")
+                    self.page.wait_for_load_state("domcontentloaded", timeout=30000)
+                    self.page.wait_for_timeout(1500)
                     
-                    # Wait a bit more for page to stabilize
-                    self.page.wait_for_timeout(2000)
-                    
-                    # Fill password on IONOS ID page
-                    password_field_ionos = self.page.locator("input#password")
-                    password_field_ionos.wait_for(state="visible", timeout=30000)
-                    self.page.fill("input#password", password)
-                    self.page.click("button#button--with-loader", timeout=30000)
-                else:
-                    # Unknown state - re-raise the exception
-                    raise
+                    logger.info(f"URL after second submit: {self.page.url}")
             
-            # Wait for page load and network idle after login
+            # Now wait for password field to appear
+            password_field = self.page.locator("input#password, input[type='password']")
+            password_field.first.wait_for(state="visible", timeout=30000)
+            
+            # Fill password and submit
+            logger.info("Password field visible - filling password")
+            self.page.fill("input#password, input[type='password']", password)
+            self.page.click("button#button--with-loader", timeout=30000)
+            
+            # Wait for post-login page to load
             self.page.wait_for_load_state("networkidle", timeout=30000)
-            self.page.wait_for_timeout(2000)
             
             # Wait for files list to appear
             self.page.wait_for_selector(".files-list", timeout=30000)
