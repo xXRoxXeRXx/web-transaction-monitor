@@ -34,6 +34,7 @@ class HiDriveNextPictureTest(MonitorBase):
             username_field = self.page.locator("input#username")
             username_field.wait_for(state="visible", timeout=30000)
             self.page.fill("input#username", username)
+            self.page.wait_for_timeout(1000)  # Wait 1 second after filling
             
             # Click submit button
             self.page.click("button#button--with-loader", timeout=30000)
@@ -55,10 +56,24 @@ class HiDriveNextPictureTest(MonitorBase):
                     
                     # Fill email and submit on IONOS page
                     self.page.fill("input[type='email'][name='identifier']", username)
+                    self.page.wait_for_timeout(1000)  # Wait 1 second after filling
                     self.page.click("button#button--with-loader", timeout=30000)
                     self.page.wait_for_load_state("networkidle", timeout=30000)
                     
                     logger.info(f"URL after IONOS submit: {self.page.url}")
+            
+            # Check again if we're still on email page (sometimes happens)
+            # Wait a bit and check if email field is still visible
+            self.page.wait_for_timeout(2000)
+            email_field_check = self.page.locator("input[type='email'][name='identifier']")
+            
+            if email_field_check.is_visible():
+                logger.warning("Still on email page after first attempt - retrying email submit")
+                self.page.fill("input[type='email'][name='identifier']", username)
+                self.page.wait_for_timeout(1000)
+                self.page.click("button#button--with-loader", timeout=30000)
+                self.page.wait_for_load_state("networkidle", timeout=30000)
+                logger.info(f"URL after retry email submit: {self.page.url}")
             
             # Now wait for password field to appear (use exact selector from HTML)
             password_field = self.page.locator("input[type='password'][name='password']")
@@ -67,10 +82,37 @@ class HiDriveNextPictureTest(MonitorBase):
             # Fill password and submit
             logger.info("Password field visible - filling password")
             self.page.fill("input[type='password'][name='password']", password)
+            self.page.wait_for_timeout(1000)  # Wait 1 second after filling
             self.page.click("button#button--with-loader", timeout=30000)
             
             # Wait for post-login page to load
             self.page.wait_for_load_state("networkidle", timeout=30000)
+            
+            # Check if we're still on login page (login failed)
+            current_url_after_password = self.page.url
+            logger.info(f"URL after password submit: {current_url_after_password}")
+            
+            # If we're still on IONOS login page, try login again
+            if "id.ionos" in current_url_after_password and "/identifier" in current_url_after_password:
+                logger.warning("Still on login page after password submit - retrying login")
+                
+                # Fill email again
+                email_field_retry = self.page.locator("input[type='email'][name='identifier']")
+                if email_field_retry.is_visible():
+                    self.page.fill("input[type='email'][name='identifier']", username)
+                    self.page.wait_for_timeout(1000)
+                    self.page.click("button#button--with-loader", timeout=30000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+                    logger.info(f"URL after retry email submit: {self.page.url}")
+                
+                # Fill password again
+                password_field_retry = self.page.locator("input[type='password'][name='password']")
+                password_field_retry.wait_for(state="visible", timeout=30000)
+                self.page.fill("input[type='password'][name='password']", password)
+                self.page.wait_for_timeout(1000)
+                self.page.click("button#button--with-loader", timeout=30000)
+                self.page.wait_for_load_state("networkidle", timeout=30000)
+                logger.info(f"URL after retry password submit: {self.page.url}")
             
             # Wait for files list to appear
             self.page.wait_for_selector(".files-list", timeout=30000)
