@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import time
 import logging
 import os
+from datetime import datetime
+from pathlib import Path
 from typing import Callable, Optional
 from playwright.sync_api import sync_playwright, Page, Browser
 from prometheus_client import Gauge, Counter
@@ -42,6 +44,33 @@ class MonitorBase(ABC):
         self.playwright: Optional[object] = None
         self.browser: Optional[Browser] = None
         self.page: Optional[Page] = None
+        
+        # Create screenshots directory if it doesn't exist
+        self.screenshots_dir = Path("screenshots")
+        self.screenshots_dir.mkdir(exist_ok=True)
+
+    def _take_screenshot(self, step_name: str, error_type: str = "error") -> str:
+        """
+        Takes a screenshot and saves it with timestamp and step name.
+        Returns the path to the saved screenshot.
+        """
+        if not self.page:
+            logger.warning(f"Cannot take screenshot: page is not initialized")
+            return ""
+        
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Sanitize step name for filename
+            safe_step_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in step_name)
+            filename = f"{self.usecase_name}_{safe_step_name}_{error_type}_{timestamp}.png"
+            filepath = self.screenshots_dir / filename
+            
+            self.page.screenshot(path=str(filepath), full_page=True)
+            logger.info(f"[{self.usecase_name}] Screenshot saved: {filepath}")
+            return str(filepath)
+        except Exception as e:
+            logger.error(f"[{self.usecase_name}] Failed to take screenshot: {e}")
+            return ""
 
     def setup(self) -> None:
         """Initializes Playwright"""
@@ -59,7 +88,7 @@ class MonitorBase(ABC):
     def measure_step(self, step_name: str, action: Callable[[], None]) -> None:
         """
         Executes 'action' (callable), measures time, and records metrics.
-        Raises exception on failure to stop the flow.
+        Takes screenshot on error. Raises exception on failure to stop the flow.
         """
         if debug_mode:
             logger.info(f"[{self.usecase_name}] Starting step: {step_name}")
@@ -72,6 +101,8 @@ class MonitorBase(ABC):
                 logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
         except Exception:
             duration = time.time() - start_time
+            # Take screenshot before logging error
+            self._take_screenshot(step_name, "step_failure")
             # Always log errors, regardless of DEBUG mode
             logger.error(f"[{self.usecase_name}] Step '{step_name}' FAILED after {duration:.2f}s", exc_info=True)
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()
@@ -80,6 +111,7 @@ class MonitorBase(ABC):
     def execute(self) -> None:
         """
         Full execution wrapper: Setup -> Run -> Teardown -> Record Success/Fail
+        Takes screenshot on any failure.
         """
         # Always log start of transaction
         logger.info(f"[{self.usecase_name}] Transaction START")
@@ -92,6 +124,8 @@ class MonitorBase(ABC):
             # Always log successful completion
             logger.info(f"[{self.usecase_name}] Transaction SUCCESS")
         except Exception:
+            # Take screenshot on transaction failure
+            self._take_screenshot("transaction", "transaction_failure")
             # Always log failures
             logger.error(f"[{self.usecase_name}] Transaction FAILED", exc_info=True)
         finally:
