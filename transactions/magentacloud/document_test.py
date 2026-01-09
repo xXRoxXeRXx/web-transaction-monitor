@@ -39,6 +39,17 @@ class MagentaCloudDocumentTest(MonitorBase):
                 pass
 
             self.page.wait_for_load_state("networkidle", timeout=30000)
+            
+            # Check for OIDC error and retry if needed
+            try:
+                error_box = self.page.locator('.guest-box:has-text("Zugriff verboten")')
+                if error_box.is_visible(timeout=2000):
+                    logger.warning("OIDC error detected, clicking 'Zurück zu MagentaCLOUD' to retry")
+                    self.page.locator('a.button.primary[href="/"]').click(timeout=10000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+            except Exception:
+                pass
+            
             self.page.wait_for_selector('.files-list', timeout=30000)
 
         self.measure_step("02_Cookie & Login", login_logic)
