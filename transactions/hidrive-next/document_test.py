@@ -59,20 +59,23 @@ class HiDriveNextDocumentTest(MonitorBase):
                 if "id.ionos.fr" in current_url or "id.ionos.de" in current_url or "id.ionos.com" in current_url:
                     logger.info("Detected redirect to IONOS ID login page")
                     
-                    # Check if username field is visible (needs re-entry)
-                    username_field_ionos = self.page.locator("input#username[type='email']")
-                    try:
-                        username_field_ionos.wait_for(state="visible", timeout=2000)
-                        # Username field is visible and empty - fill it
-                        logger.info("Re-entering username on IONOS ID page")
-                        self.page.fill("input#username", username)
-                    except Exception:
-                        # Username already filled, no action needed
-                        pass
+                    # On IONOS ID page, we MUST fill the username field
+                    # Even if it appears hidden or pre-filled, we need to ensure it has a value
+                    username_field_ionos = self.page.locator("input#username, input[type='email']")
+                    username_field_ionos.first.wait_for(state="attached", timeout=5000)
                     
-                    # Click continue button
+                    # Force fill the username
+                    logger.info("Filling username on IONOS ID page")
+                    self.page.fill("input#username", username)
+                    
+                    # Click continue button and wait for navigation
+                    logger.info(f"Current URL before continue: {self.page.url}")
                     self.page.click("button#button--with-loader", timeout=30000)
                     self.page.wait_for_load_state("networkidle", timeout=30000)
+                    logger.info(f"Current URL after continue: {self.page.url}")
+                    
+                    # Wait a bit more for page to stabilize
+                    self.page.wait_for_timeout(2000)
                     
                     # Fill password on IONOS ID page
                     password_field_ionos = self.page.locator("input#password")
