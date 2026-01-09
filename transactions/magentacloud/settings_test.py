@@ -20,19 +20,29 @@ class MagentaCloudSettingsTest(MonitorBase):
 
         # Step 2: Cookie & Login
         def login_logic():
-            # Recorded MagentaCloud login flow
+            # Accept cookies (language-independent)
             try:
-                self.page.get_by_role("button", name="Alle akzeptieren").click(timeout=30000)
+                self.page.locator('button[data-action="accept-all"], button:has-text("Alle akzeptieren"), button:has-text("Accept all")').first.click(timeout=30000)
             except Exception:
                 pass
 
-            self.page.get_by_role("textbox", name="Benutzername").click(timeout=30000)
-            self.page.get_by_role("textbox", name="Benutzername").fill(username, timeout=30000)
-            self.page.get_by_role("button", name="Weiter").click(timeout=30000)
+            # Username field (language-independent - uses input type and name/id)
+            username_field = self.page.locator('input[type="text"][name*="user" i], input[type="text"][name*="username" i], input[type="email"]').first
+            username_field.wait_for(state="visible", timeout=30000)
+            username_field.click()
+            username_field.fill(username)
+            
+            # Submit button (scale-button custom element)
+            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
 
-            self.page.get_by_role("textbox", name="Passwort").click(timeout=30000)
-            self.page.get_by_role("textbox", name="Passwort").fill(password, timeout=30000)
-            self.page.get_by_role("textbox", name="Passwort").press("Enter", timeout=30000)
+            # Password field (language-independent)
+            password_field = self.page.locator('input[type="password"]').first
+            password_field.wait_for(state="visible", timeout=30000)
+            password_field.click()
+            password_field.fill(password)
+            
+            # Submit password (scale-button)
+            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
 
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
