@@ -35,11 +35,18 @@ class HiDriveNextDocumentTest(MonitorBase):
                 pass
             
             # Fill Username
-            self.page.fill("input#username", username, timeout=30000)
+            username_field = self.page.locator("input#username")
+            username_field.wait_for(state="visible", timeout=30000)
+            self.page.fill("input#username", username)
             self.page.click("button#button--with-loader", timeout=30000)
             
+            # CRITICAL: Wait for password field to appear after username submit
+            self.page.wait_for_timeout(1000)
+            
             # Fill Password
-            self.page.fill("input#password", password, timeout=30000)
+            password_field = self.page.locator("input#password")
+            password_field.wait_for(state="visible", timeout=30000)
+            self.page.fill("input#password", password)
             self.page.click("button#button--with-loader", timeout=30000)
             
             # Wait for page load and network idle after login
