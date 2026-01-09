@@ -50,11 +50,13 @@ class HiDriveLegacyPictureTest(MonitorBase):
 
         # Step 3: Browse and open picture
         def browse_logic():
-            # First folder
-            self.page.locator('.file-item-icon > svg > path').click()
+            # First folder - use .first to select the first matching element
+            self.page.locator('.file-item-icon > svg > path').first.click()
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
-            # Second folder
-            self.page.locator('.file-item-icon > svg > path').click()
+            # Second folder - again use .first after navigation
+            self.page.locator('.file-item-icon > svg > path').first.click()
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Open picture (3rd item)
             self.page.locator('tile-item:nth-child(3) > .itemcontent > .file-item-icon > .thumbnail').click()
