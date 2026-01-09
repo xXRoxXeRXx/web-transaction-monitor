@@ -55,7 +55,18 @@ class HiDriveNextPictureTest(MonitorBase):
                 if "id.ionos.fr" in current_url or "id.ionos.de" in current_url or "id.ionos.com" in current_url:
                     logger.info("Detected redirect to IONOS ID login page")
                     
-                    # Username is pre-filled, just click continue button
+                    # Check if username field is visible (needs re-entry)
+                    username_field_ionos = self.page.locator("input#username[type='email']")
+                    try:
+                        username_field_ionos.wait_for(state="visible", timeout=2000)
+                        # Username field is visible and empty - fill it
+                        logger.info("Re-entering username on IONOS ID page")
+                        self.page.fill("input#username", username)
+                    except Exception:
+                        # Username already filled, no action needed
+                        pass
+                    
+                    # Click continue button
                     self.page.click("button#button--with-loader", timeout=30000)
                     self.page.wait_for_load_state("networkidle", timeout=30000)
                     
