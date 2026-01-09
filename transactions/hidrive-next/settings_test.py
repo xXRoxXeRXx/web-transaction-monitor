@@ -34,13 +34,14 @@ class HiDriveNextSettingsTest(MonitorBase):
             username_field = self.page.locator("input#username")
             username_field.wait_for(state="visible", timeout=30000)
             self.page.fill("input#username", username)
+            
+            # Click submit and wait for username field to disappear (navigation indicator)
             self.page.click("button#button--with-loader", timeout=30000)
+            username_field.wait_for(state="hidden", timeout=30000)
             
-            # CRITICAL: Wait for password field to appear after username submit
-            self.page.wait_for_timeout(1000)
-            
-            # Fill Password
+            # Fill Password - wait for field to be both attached and visible
             password_field = self.page.locator("input#password")
+            password_field.wait_for(state="attached", timeout=30000)
             password_field.wait_for(state="visible", timeout=30000)
             self.page.fill("input#password", password)
             self.page.click("button#button--with-loader", timeout=30000)
