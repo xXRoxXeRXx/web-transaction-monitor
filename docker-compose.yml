@@ -9,6 +9,7 @@ services:
       - ./runners:/app/runners
       - ./main.py:/app/main.py
       - ./monitor_base.py:/app/monitor_base.py
+      - ./screenshots:/app/screenshots  # Mount screenshots directory for error debugging
     env_file:
       - .env
     restart: unless-stopped
