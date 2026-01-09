@@ -57,6 +57,19 @@ class MagentaCloudSettingsTest(MonitorBase):
             except Exception:
                 pass
             
+            # Check if redirected to 2FA setup page and skip it
+            current_url = self.page.url
+            if "account.idm.telekom.com/account-manager/auth-methods/setup" in current_url:
+                logger.warning("2FA setup page detected, clicking 'Später' to skip")
+                try:
+                    # Click "Später" button (scale-button with variant="secondary")
+                    later_button = self.page.locator('scale-button[variant="secondary"]:has-text("Später"), scale-button:has-text("Später")')
+                    later_button.first.click(timeout=10000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+                except Exception as e:
+                    logger.error(f"Could not click 'Später' button: {e}")
+                    raise
+            
             # Wait for files list with multiple possible selectors
             try:
                 self.page.wait_for_selector('.files-list', timeout=30000)
