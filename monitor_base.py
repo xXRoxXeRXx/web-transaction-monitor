@@ -72,6 +72,46 @@ class MonitorBase(ABC):
             logger.error(f"[{self.usecase_name}] Failed to take screenshot: {e}")
             return ""
 
+    def _save_page_html(self, step_name: str, error_type: str = "error") -> str:
+        """
+        Saves the current page HTML content with timestamp and step name.
+        Returns the path to the saved HTML file.
+        """
+        if not self.page:
+            logger.warning(f"Cannot save HTML: page is not initialized")
+            return ""
+        
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Sanitize step name for filename
+            safe_step_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in step_name)
+            filename = f"{self.usecase_name}_{safe_step_name}_{error_type}_{timestamp}.html"
+            filepath = self.screenshots_dir / filename
+            
+            # Get the full HTML content
+            html_content = self.page.content()
+            
+            # Also add metadata at the top
+            metadata = f"""<!--
+URL: {self.page.url}
+Title: {self.page.title()}
+Timestamp: {timestamp}
+Use Case: {self.usecase_name}
+Step: {step_name}
+Error Type: {error_type}
+-->
+
+"""
+            
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(metadata + html_content)
+            
+            logger.info(f"[{self.usecase_name}] HTML saved: {filepath}")
+            return str(filepath)
+        except Exception as e:
+            logger.error(f"[{self.usecase_name}] Failed to take screenshot: {e}")
+            return ""
+
     def setup(self) -> None:
         """Initializes Playwright"""
         self.playwright = sync_playwright().start()
@@ -101,8 +141,9 @@ class MonitorBase(ABC):
                 logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
         except Exception:
             duration = time.time() - start_time
-            # Take screenshot before logging error
+            # Take screenshot and save HTML before logging error
             self._take_screenshot(step_name, "step_failure")
+            self._save_page_html(step_name, "step_failure")
             # Always log errors, regardless of DEBUG mode
             logger.error(f"[{self.usecase_name}] Step '{step_name}' FAILED after {duration:.2f}s", exc_info=True)
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()
@@ -124,8 +165,9 @@ class MonitorBase(ABC):
             # Always log successful completion
             logger.info(f"[{self.usecase_name}] Transaction SUCCESS")
         except Exception:
-            # Take screenshot on transaction failure
+            # Take screenshot and save HTML on transaction failure
             self._take_screenshot("transaction", "transaction_failure")
+            self._save_page_html("transaction", "transaction_failure")
             # Always log failures
             logger.error(f"[{self.usecase_name}] Transaction FAILED", exc_info=True)
         finally:
