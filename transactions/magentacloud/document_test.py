@@ -33,11 +33,6 @@ class MagentaCloudDocumentTest(MonitorBase):
             self.page.get_by_role("textbox", name="Passwort").fill(password, timeout=30000)
             self.page.get_by_role("textbox", name="Passwort").press("Enter", timeout=30000)
 
-            try:
-                self.page.get_by_role("button", name="Login").click(timeout=30000)
-            except Exception:
-                pass
-
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Check for OIDC error and retry if needed
@@ -54,51 +49,64 @@ class MagentaCloudDocumentTest(MonitorBase):
 
         self.measure_step("02_Cookie & Login", login_logic)
 
-        # Step 3: Browse and open document
-        def browse_logic():
-            # Navigate to documents folder
-            documents_button = self.page.locator('tr[data-cy-files-list-row-name="documents"] button[data-cy-files-list-row-name-link]')
-            documents_button.wait_for(state="visible", timeout=30000)
-            documents_button.click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+       # Step 3: Create and edit document
+        def create_document_logic():
+            # Click "Neu" button using class (language-independent) - increased timeout
+            self.page.locator('button.action-item__menutoggle:has(.plus-icon)').click(timeout=30000)
             
-            # Open first document (assuming it's a PDF or text file)
-            first_document = self.page.locator('tr[data-cy-files-list-row]:not([data-cy-files-list-row-name*="."]) button[data-cy-files-list-row-name-link]').first
-            first_document.wait_for(state="visible", timeout=30000)
-            first_document.click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            # Click "Neues Dokument" using data-cy (language-independent)
+            self.page.locator('[data-cy-upload-picker-menu-entry="template-new-richdocuments-1"]').click(timeout=30000)
+            
+            # Click "Erstellen" using data-cy (language-independent)
+            self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=30000)
+            
+            # Wait for Collabora iframe to load (can be slow in Docker/headless)
+            self.page.wait_for_selector('iframe[name^="collaboraframe"]', timeout=60000)
+            
+            # Get the iframe (use dynamic name detection)
+            iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
+            
+            # Click in document area and type text
+            iframe_locator.locator('.leaflet-layer').click(timeout=30000)
+            iframe_locator.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)
+            
+            # Wait for document canvas to confirm content is rendered
+            iframe_locator.locator('#document-canvas').wait_for(state='visible', timeout=30000)
 
-        self.measure_step("03_Browse and open document", browse_logic)
+        self.measure_step("03_Create and edit document", create_document_logic)
 
-        # Step 4: Close document viewer
-        def close_viewer():
-            # Try to close via Escape key
-            self.page.keyboard.press("Escape")
+        # Step 4: Close document
+        def close_document_logic():
+            # Close document in Collabora using ID (language-independent)
+            iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
+            iframe_locator.locator('button#closebutton').click(timeout=30000)
+            
+            # Wait for return to file list
+            self.page.wait_for_selector('.files-list', timeout=30000)
+
+        self.measure_step("04_Close document", close_document_logic)
+
+        # Step 5: Delete document
+        def delete_document_logic():
+            # Click actions menu for the document (language-independent)
+            self.page.locator('tr[data-cy-files-list-row]:has-text("Neues") button.action-item__menutoggle').first.click(timeout=30000)
+            
+            # Click delete using data-cy (language-independent)
+            self.page.locator('[data-cy-files-list-row-action="delete"]').click(timeout=30000)
+            
+            # Wait for deletion to complete
             self.page.wait_for_timeout(1000)
-            
-            # If viewer has a close button, try that as well
-            try:
-                close_button = self.page.locator('button[aria-label*="Close"], button[aria-label*="Schließen"]').first
-                if close_button.is_visible():
-                    close_button.click()
-                    self.page.wait_for_timeout(500)
-            except Exception:
-                pass
 
-        self.measure_step("04_Close document viewer", close_viewer)
+        self.measure_step("05_Delete document", delete_document_logic)
 
-        # Step 5: Logout
-        def logout():
-            user_menu = self.page.locator('#user-menu button.header-menu__trigger')
-            user_menu.wait_for(state="visible", timeout=30000)
-            user_menu.click()
-            self.page.wait_for_timeout(500)
-            
-            logout_link = self.page.locator('a#logout')
-            logout_link.wait_for(state="visible", timeout=30000)
-            logout_link.click()
+        # Step 6: Logout
+        def logout_logic():
+            # Open settings menu and logout using IDs (language-independent)
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=30000)
+            self.page.locator('a#logout').click(timeout=30000)
 
-        self.measure_step("05_Logout", logout)
+        self.measure_step("06_Logout", logout_logic)
+
 
 if __name__ == "__main__":
     monitor = MagentaCloudDocumentTest()

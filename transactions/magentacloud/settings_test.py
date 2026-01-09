@@ -4,9 +4,9 @@ import os
 
 logger = logging.getLogger(__name__)
 
-class MagentaCloudPictureTest(MonitorBase):
+class MagentaCloudSettingsTest(MonitorBase):
     def __init__(self, usecase_name: str = None) -> None:
-        name = usecase_name or "magentacloud_picture_test"
+        name = usecase_name or "magentacloud_settings_test"
         headless = os.getenv('HEADLESS', 'true').lower() in ('true', '1', 'yes')
         super().__init__(usecase_name=name, headless=headless)
 
@@ -20,6 +20,7 @@ class MagentaCloudPictureTest(MonitorBase):
 
         # Step 2: Cookie & Login
         def login_logic():
+            # Recorded MagentaCloud login flow
             try:
                 self.page.get_by_role("button", name="Alle akzeptieren").click(timeout=30000)
             except Exception:
@@ -32,11 +33,6 @@ class MagentaCloudPictureTest(MonitorBase):
             self.page.get_by_role("textbox", name="Passwort").click(timeout=30000)
             self.page.get_by_role("textbox", name="Passwort").fill(password, timeout=30000)
             self.page.get_by_role("textbox", name="Passwort").press("Enter", timeout=30000)
-
-            try:
-                self.page.get_by_role("button", name="Login").click(timeout=30000)
-            except Exception:
-                pass
 
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
@@ -54,42 +50,41 @@ class MagentaCloudPictureTest(MonitorBase):
 
         self.measure_step("02_Cookie & Login", login_logic)
 
-        # Step 3: Browse and open picture
-        def browse_logic():
-            # Navigate to pictures folder
-            pictures_button = self.page.locator('tr[data-cy-files-list-row-name="pictures"] button[data-cy-files-list-row-name-link]')
-            pictures_button.wait_for(state="visible", timeout=30000)
-            pictures_button.click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+        # Step 3: Open settings menu and navigate to Security
+        def navigate_to_settings_and_security():
+            # Open user menu
+            self.page.locator('#user-menu button.header-menu__trigger').click(timeout=30000)
+            self.page.wait_for_timeout(500)
             
-            # Navigate to Norway folder
-            norway_button = self.page.locator('tr[data-cy-files-list-row-name="Norway"] button[data-cy-files-list-row-name-link]')
-            norway_button.wait_for(state="visible", timeout=30000)
-            norway_button.click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            # Click on Settings link (the <a> inside the <li id="settings">)
+            self.page.locator('li#settings a').click(timeout=30000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
-            # Open image
-            image_button = self.page.locator('tr[data-cy-files-list-row-name="abhishek-umrao-qsvNYg6iMGk-unsplash.jpg"] button[data-cy-files-list-row-name-link]')
-            image_button.wait_for(state="visible", timeout=30000)
-            image_button.click()
-            self.page.wait_for_load_state("networkidle", timeout=10000)
+            # Navigate to Security using data-section-id (language-independent)
+            self.page.locator('li[data-section-id="sessions"] a').click(timeout=30000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
+        
+        self.measure_step("03_Navigate to Settings & Security", navigate_to_settings_and_security)
 
-        self.measure_step("03_Browse and open picture", browse_logic)
-
-        # Step 4: Close picture viewer
-        def close_viewer():
-            self.page.keyboard.press("Escape")
-            self.page.wait_for_timeout(1000)
-
-        self.measure_step("04_Close picture viewer", close_viewer)
+        # Step 4: Go back to files
+        def go_back_to_files():
+            # Click on "Dateien" link in app menu
+            self.page.locator('a[href="/apps/files/"]').click(timeout=30000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('.files-list', timeout=30000)
+        
+        self.measure_step("04_Go back to files", go_back_to_files)
 
         # Step 5: Logout
         def logout():
+            # Open settings menu using ID (language-independent)
             self.page.locator('#user-menu button.header-menu__trigger').click(timeout=30000)
+            
+            # Logout using ID (language-independent)
             self.page.locator('a#logout').click(timeout=30000)
 
         self.measure_step("05_Logout", logout)
 
 if __name__ == "__main__":
-    monitor = MagentaCloudPictureTest()
+    monitor = MagentaCloudSettingsTest()
     monitor.execute()
