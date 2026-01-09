@@ -152,7 +152,7 @@ Error Type: {error_type}
     def execute(self) -> None:
         """
         Full execution wrapper: Setup -> Run -> Teardown -> Record Success/Fail
-        Takes screenshot on any failure.
+        Note: Screenshots are taken by measure_step() on step failures.
         """
         # Always log start of transaction
         logger.info(f"[{self.usecase_name}] Transaction START")
@@ -165,10 +165,7 @@ Error Type: {error_type}
             # Always log successful completion
             logger.info(f"[{self.usecase_name}] Transaction SUCCESS")
         except Exception:
-            # Take screenshot and save HTML on transaction failure
-            self._take_screenshot("transaction", "transaction_failure")
-            self._save_page_html("transaction", "transaction_failure")
-            # Always log failures
+            # Always log failures (screenshot already taken in measure_step)
             logger.error(f"[{self.usecase_name}] Transaction FAILED", exc_info=True)
         finally:
             self.teardown()
