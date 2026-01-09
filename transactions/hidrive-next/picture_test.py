@@ -35,16 +35,38 @@ class HiDriveNextPictureTest(MonitorBase):
             username_field.wait_for(state="visible", timeout=30000)
             self.page.fill("input#username", username)
             
-            # Click submit and wait for username field to disappear (navigation indicator)
+            # Click submit and wait for navigation
             self.page.click("button#button--with-loader", timeout=30000)
-            username_field.wait_for(state="hidden", timeout=30000)
+            self.page.wait_for_load_state("networkidle", timeout=30000)
             
-            # Fill Password - wait for field to be both attached and visible
+            # Check which page we landed on after username submit
+            current_url = self.page.url
+            
+            # Try to detect if password field is already visible (normal flow)
             password_field = self.page.locator("input#password")
-            password_field.wait_for(state="attached", timeout=30000)
-            password_field.wait_for(state="visible", timeout=30000)
-            self.page.fill("input#password", password)
-            self.page.click("button#button--with-loader", timeout=30000)
+            try:
+                password_field.wait_for(state="visible", timeout=3000)
+                # Normal flow: password field appeared on same page
+                logger.info("Normal login flow - password field visible")
+                self.page.fill("input#password", password)
+                self.page.click("button#button--with-loader", timeout=30000)
+            except Exception:
+                # Password field not visible - check if redirected to IONOS ID
+                if "id.ionos.fr" in current_url or "id.ionos.de" in current_url or "id.ionos.com" in current_url:
+                    logger.info("Detected redirect to IONOS ID login page")
+                    
+                    # Username is pre-filled, just click continue button
+                    self.page.click("button#button--with-loader", timeout=30000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+                    
+                    # Fill password on IONOS ID page
+                    password_field_ionos = self.page.locator("input#password")
+                    password_field_ionos.wait_for(state="visible", timeout=30000)
+                    self.page.fill("input#password", password)
+                    self.page.click("button#button--with-loader", timeout=30000)
+                else:
+                    # Unknown state - re-raise the exception
+                    raise
             
             # Wait for post-login page to load
             self.page.wait_for_load_state("networkidle", timeout=30000)
