@@ -1,6 +1,6 @@
 # Makefile for web-transaction-monitor
 
-.PHONY: help install test lint type-check format docker-up docker-down docker-logs clean
+.PHONY: help install test lint type-check format docker-up docker-down docker-logs clean cleanup-screenshots
 
 help:
 	@echo "Available commands:"
@@ -13,6 +13,8 @@ help:
 	@echo "  make docker-down   - Stop Docker stack"
 	@echo "  make docker-logs   - View Docker logs"
 	@echo "  make clean         - Clean cache and temp files"
+	@echo "  make cleanup-screenshots - Delete old screenshots (7 days)"
+	@echo "  make cleanup-screenshots-dry - Preview screenshot cleanup"
 
 install:
 	poetry install
@@ -57,5 +59,11 @@ clean:
 	find . -type d -name ".ruff_cache" -exec rm -rf {} +
 	rm -rf htmlcov/
 	rm -f .coverage
+
+cleanup-screenshots:
+	python cleanup_screenshots.py --days 7
+
+cleanup-screenshots-dry:
+	python cleanup_screenshots.py --days 7 --dry-run
 
 all: lint type-check test

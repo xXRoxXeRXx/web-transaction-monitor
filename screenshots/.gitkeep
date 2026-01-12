@@ -1,0 +1,59 @@
+# Screenshots Directory
+
+This directory contains screenshots captured automatically when tests fail.
+
+## Filename Format
+`{usecase}_{step_name}_{error_type}_{timestamp}.png`
+
+Example:
+- `magentacloud_picture_test_02_Cookie_Login_step_failure_20260109_143052.png`
+- `hidrive-next_picture_test_transaction_transaction_failure_20260109_150230.png`
+
+## Error Types
+- `step_failure`: Screenshot taken when a specific test step fails
+- `transaction_failure`: Screenshot taken when the entire transaction fails
+
+## Access
+- **Local development**: Screenshots are saved directly to this directory
+- **Docker**: This directory is mounted as a volume in docker-compose.yml
+- **Production**: Screenshots persist on the host machine even if container is restarted
+
+## Cleanup
+Screenshots and HTML files are not automatically deleted. Use the cleanup script to remove old files:
+
+```bash
+# Delete files older than 7 days (default)
+python cleanup_screenshots.py
+
+# Delete files older than 30 days
+python cleanup_screenshots.py --days 30
+
+# Dry run - see what would be deleted without deleting
+python cleanup_screenshots.py --dry-run
+
+# Delete files older than 14 days (dry run)
+python cleanup_screenshots.py --days 14 --dry-run
+```
+
+### Automated Cleanup (Optional)
+
+**Linux/Mac Cron Job** (daily at 2 AM):
+```bash
+0 2 * * * cd /path/to/web-transaction-monitor && python cleanup_screenshots.py --days 7
+```
+
+**Windows Task Scheduler**:
+```powershell
+# Run daily at 2:00 AM
+schtasks /create /tn "Cleanup Screenshots" /tr "python C:\path\to\cleanup_screenshots.py --days 7" /sc daily /st 02:00
+```
+
+**Docker** (add to docker-compose.yml):
+```yaml
+  cleanup:
+    image: python:3.11-slim
+    volumes:
+      - ./screenshots:/app/screenshots
+      - ./cleanup_screenshots.py:/app/cleanup_screenshots.py
+    command: sh -c "while true; do python /app/cleanup_screenshots.py --days 7; sleep 86400; done"
+```

@@ -56,6 +56,24 @@ services:
     depends_on:
       - prometheus
 
+  screenshot-cleanup:
+    image: python:3.11-slim
+    container_name: web-monitor-cleanup
+    volumes:
+      - ./screenshots:/app/screenshots
+      - ./cleanup_screenshots.py:/app/cleanup_screenshots.py
+    working_dir: /app
+    command: >
+      sh -c "while true; do
+        echo 'Running screenshot cleanup...';
+        python cleanup_screenshots.py --days 7;
+        echo 'Next cleanup in 24 hours';
+        sleep 86400;
+      done"
+    restart: unless-stopped
+    depends_on:
+      - monitor-app
+
 volumes:
   prometheus_data:
   grafana_data:
