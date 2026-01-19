@@ -38,6 +38,25 @@ STEP_FAILURE = Counter(
 )
 
 class MonitorBase(ABC):
+    def _save_error_stack(self, step_name: str, error_type: str, exc: Exception) -> str:
+        """
+        Saves the error stack trace to a text file with timestamp and step name.
+        Returns the path to the saved error file.
+        """
+        import traceback
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_step_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in step_name)
+        filename = f"{self.usecase_name}_{safe_step_name}_{error_type}_{timestamp}_error.txt"
+        filepath = self.screenshots_dir / filename
+        stack = traceback.format_exc()
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(stack)
+            logger.info(f"[{self.usecase_name}] Error stack saved: {filepath}")
+            return str(filepath)
+        except Exception as e:
+            logger.error(f"[{self.usecase_name}] Failed to save error stack: {e}")
+            return ""
     def __init__(self, usecase_name: str, headless: bool = True) -> None:
         self.usecase_name = usecase_name
         self.headless = headless
@@ -139,11 +158,12 @@ Error Type: {error_type}
             TRANS_DURATION.labels(usecase=self.usecase_name, step=step_name).set(duration)
             if debug_mode:
                 logger.info(f"[{self.usecase_name}] Step '{step_name}' success ({duration:.2f}s)")
-        except Exception:
+        except Exception as exc:
             duration = time.time() - start_time
-            # Take screenshot and save HTML before logging error
+            # Take screenshot, save HTML, and error stack before logging error
             self._take_screenshot(step_name, "step_failure")
             self._save_page_html(step_name, "step_failure")
+            self._save_error_stack(step_name, "step_failure", exc)
             # Always log errors, regardless of DEBUG mode
             logger.error(f"[{self.usecase_name}] Step '{step_name}' FAILED after {duration:.2f}s", exc_info=True)
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()
