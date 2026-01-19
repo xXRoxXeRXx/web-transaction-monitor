@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 SCREENSHOTS_DIR = Path(__file__).parent / "screenshots"
 DEFAULT_RETENTION_DAYS = 7
-FILE_EXTENSIONS = [".png", ".html"]
+FILE_EXTENSIONS = [".png", ".html", ".txt"]
 
 
 def cleanup_old_files(retention_days: int = DEFAULT_RETENTION_DAYS, dry_run: bool = False) -> tuple[int, int]:
