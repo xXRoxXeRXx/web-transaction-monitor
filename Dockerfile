@@ -5,6 +5,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -25,9 +26,12 @@ RUN playwright install-deps chromium
 # Copy application code
 COPY . .
 
+# Make scripts executable
+RUN chmod +x /app/cleanup_processes.sh /app/entrypoint.sh
+
 # Expose Prometheus metrics port
 EXPOSE 8000
 
-# Run the application
+# Run the application with entrypoint script
 ENV PYTHONUNBUFFERED=1
-CMD ["python", "main.py"]
+CMD ["/app/entrypoint.sh"]

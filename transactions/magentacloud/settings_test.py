@@ -47,11 +47,11 @@ class MagentaCloudSettingsTest(MonitorBase):
             # Wait for navigation after password submit
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
-            # Check for OIDC error and retry if needed
+            # Check for OIDC error and handle gracefully
             try:
                 error_box = self.page.locator('.guest-box:has-text("Zugriff verboten")')
                 if error_box.is_visible(timeout=2000):
-                    logger.warning("OIDC error detected, clicking 'Zurück zu MagentaCLOUD' to retry")
+                    logger.warning("OIDC error detected: Zugriff verboten. Klicke 'Zurück zu MagentaCLOUD' und fahre fort.")
                     self.page.locator('a.button.primary[href="/"]').click(timeout=10000)
                     self.page.wait_for_load_state("networkidle", timeout=30000)
             except Exception:

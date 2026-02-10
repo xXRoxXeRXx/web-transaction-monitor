@@ -41,7 +41,6 @@ def load_and_schedule_usecases(scheduler: BackgroundScheduler) -> None:
     
     # Discover Python files (Recursively)
     py_files = glob.glob(os.path.join(transactions_dir, '**', '*.py'), recursive=True)
-    JOB_TIMEOUT_SECONDS = int(os.getenv('JOB_TIMEOUT_SECONDS', 240))  # Default: 4 min per job
     for i, py_file in enumerate(py_files):
         if os.path.basename(py_file).startswith('__'): 
             continue
@@ -52,32 +51,13 @@ def load_and_schedule_usecases(scheduler: BackgroundScheduler) -> None:
         job_id = f"python_{name}"
         # Stagger start times by 1 second to ensure sequential execution doesn't skip
         start_time = datetime.now() + timedelta(seconds=i)
-        def run_with_timeout(py_file=py_file, name=name):
-            import threading
-            result = {'done': False}
-            def target():
-                try:
-                    python_runner.run(py_file, name)
-                except Exception as e:
-                    logger.error(f"Job {name} crashed: {e}")
-                finally:
-                    result['done'] = True
-            t = threading.Thread(target=target)
-            t.start()
-            t.join(JOB_TIMEOUT_SECONDS)
-            if t.is_alive():
-                logger.error(f"Job {name} exceeded timeout ({JOB_TIMEOUT_SECONDS}s) and will be skipped.")
-                # Optionally: set metrics to failure
-                from monitor_base import TRANS_SUCCESS, TRANS_LAST_RUN
-                TRANS_SUCCESS.labels(usecase=name).set(0)
-                TRANS_LAST_RUN.labels(usecase=name).set_to_current_time()
-                # Try to clean up resources if possible (not always possible)
-                # Note: Python cannot forcibly kill threads, so this is a best-effort
+        
         scheduler.add_job(
-            run_with_timeout,
+            python_runner.run,
             'interval',
             seconds=CHECK_INTERVAL_SECONDS,
             next_run_time=start_time,
+            args=[py_file, name],
             id=job_id,
             replace_existing=True
         )

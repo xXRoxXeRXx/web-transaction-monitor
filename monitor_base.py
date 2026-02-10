@@ -139,10 +139,38 @@ Error Type: {error_type}
         self.page = self.browser.new_page()
 
     def teardown(self) -> None:
-        """Cleans up Playwright"""
-        if self.page: self.page.close()
-        if self.browser: self.browser.close()
-        if self.playwright: self.playwright.stop()
+        """Cleans up Playwright - robust cleanup with error handling"""
+        try:
+            if self.page:
+                try:
+                    self.page.close()
+                except Exception as e:
+                    logger.warning(f"[{self.usecase_name}] Failed to close page: {e}")
+        except Exception:
+            pass
+        
+        try:
+            if self.browser:
+                try:
+                    self.browser.close()
+                except Exception as e:
+                    logger.warning(f"[{self.usecase_name}] Failed to close browser: {e}")
+        except Exception:
+            pass
+        
+        try:
+            if self.playwright:
+                try:
+                    self.playwright.stop()
+                except Exception as e:
+                    logger.warning(f"[{self.usecase_name}] Failed to stop playwright: {e}")
+        except Exception:
+            pass
+        
+        # Force cleanup of references to help garbage collection
+        self.page = None
+        self.browser = None
+        self.playwright = None
 
     def measure_step(self, step_name: str, action: Callable[[], None]) -> None:
         """
