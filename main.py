@@ -83,11 +83,26 @@ def main() -> None:
     logger.info("Starting Scheduler (Sequential Mode)...")
     scheduler.start()
     
-    # Keep main thread alive
+    # Keep main thread alive with periodic health check
+    last_heartbeat = time.time()
     try:
         while True:
-            time.sleep(1)
+            time.sleep(60)  # Check every minute
+            current_time = time.time()
+            
+            # Log heartbeat every 5 minutes
+            if current_time - last_heartbeat >= 300:
+                logger.info(f"Scheduler heartbeat: {scheduler.running}, active jobs: {len(scheduler.get_jobs())}")
+                last_heartbeat = current_time
+            
+            # Check if scheduler is still running
+            if not scheduler.running:
+                logger.error("Scheduler stopped unexpectedly! Exiting...")
+                break
+                
     except (KeyboardInterrupt, SystemExit):
+        logger.info("Shutdown signal received")
+    finally:
         scheduler.shutdown()
         logger.info("Scheduler stopped")
 

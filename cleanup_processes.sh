@@ -5,8 +5,8 @@
 echo "[$(date)] Checking for orphaned browser processes..."
 
 # Find and kill orphaned chromium processes older than 10 minutes
-# (Legitimate tests should finish within the timeout)
-for pid in $(ps aux | grep -E 'chromium|playwright' | grep -v grep | awk '{print $2}'); do
+# Exclude: grep, python (main process), and the current bash script
+for pid in $(ps aux | grep -E 'chromium|chrome|node.*playwright' | grep -v grep | grep -v 'python' | awk '{print $2}'); do
     # Check process age (in seconds)
     age=$(ps -o etimes= -p $pid 2>/dev/null | tr -d ' ')
     if [ -n "$age" ] && [ "$age" -gt 600 ]; then

@@ -12,5 +12,11 @@ chmod +x /app/cleanup_processes.sh 2>/dev/null || true
   done
 ) &
 
-# Start main application
-exec python main.py
+# Start main application with auto-restart on crash
+while true; do
+  echo "[$(date)] Starting main.py..."
+  python main.py
+  EXIT_CODE=$?
+  echo "[$(date)] main.py exited with code $EXIT_CODE. Restarting in 10 seconds..."
+  sleep 10
+done
