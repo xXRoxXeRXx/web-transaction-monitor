@@ -162,10 +162,15 @@ Error Type: {error_type}
 
         self.browser = self.playwright.chromium.launch(**launch_options)
         storage_state_path = os.getenv("PLAYWRIGHT_STORAGE_STATE")
-        if storage_state_path:
+        if storage_state_path and Path(storage_state_path).is_file():
             self.context = self.browser.new_context(storage_state=storage_state_path)
             self.page = self.context.new_page()
         else:
+            if storage_state_path:
+                logger.warning(
+                    f"[{self.usecase_name}] Storage state not found: {storage_state_path}; "
+                    "starting without restored authentication"
+                )
             self.page = self.browser.new_page()
 
     def teardown(self) -> None:
