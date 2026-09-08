@@ -16,6 +16,7 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
         login_url = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_URL', 'https://workspace.kallisto45.de/login')
         username = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_USER')
         password = os.getenv('IONOS_NEXTCLOUD_WORKSPACE_PASS')
+        created_document_name = ""
         
         # Step 1: Go to start URL
         self.measure_step("01_Go to start URL", lambda: 
@@ -39,11 +40,16 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 3: Create and edit document
         def create_document_logic():
+            nonlocal created_document_name
+
             # Click "Neu" button using class (language-independent) - increased timeout
             self.page.locator('button.action-item__menutoggle:has(.plus-icon)').click(timeout=30000)
             
             # Click "Neues Dokument" using data-cy (language-independent)
             self.page.locator('[data-cy-upload-picker-menu-entry="template-new-richdocuments-1"]').click(timeout=30000)
+
+            # Keep the generated name so cleanup targets exactly this document
+            created_document_name = self.page.locator('[role="dialog"] input').input_value()
             
             # Click "Erstellen" using data-cy (language-independent)
             self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=30000)
@@ -54,8 +60,7 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
             # Get the iframe (use dynamic name detection)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
             
-            # Click in document area and type text
-            iframe_locator.locator('.leaflet-layer').click(timeout=30000)
+            # Type directly into Collabora's hidden clipboard input; the canvas intercepts clicks
             iframe_locator.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)
             
             # Wait for document canvas to confirm content is rendered
@@ -67,7 +72,7 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
         def close_document_logic():
             # Close document in Collabora using ID (language-independent)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
-            iframe_locator.locator('button#closebutton').click(timeout=30000)
+            iframe_locator.locator('#closebutton').click(timeout=30000)
             
             # Wait for return to file list
             self.page.wait_for_selector('.files-list', timeout=30000)
@@ -76,8 +81,11 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
 
         # Step 5: Delete document
         def delete_document_logic():
-            # Click actions menu for the document (language-independent)
-            self.page.locator('tr[data-cy-files-list-row]:has-text("Neues") button.action-item__menutoggle').first.click(timeout=30000)
+            # Click actions menu for the exact document created in this run
+            document_row = self.page.locator(
+                f'tr[data-cy-files-list-row][data-cy-files-list-row-name="{created_document_name}"]'
+            )
+            document_row.locator('button.action-item__menutoggle').click(timeout=30000)
             
             # Click delete using data-cy (language-independent)
             self.page.locator('[data-cy-files-list-row-action="delete"]').click(timeout=30000)
