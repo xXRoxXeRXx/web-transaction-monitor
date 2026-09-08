@@ -38,11 +38,11 @@ class IonosManagedNextcloudPictureTest(MonitorBase):
         # Step 3: Browse and open picture
         def browse_logic():
             # Click folder 'pictures'
-            self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=30000)
+            self.page.locator('tr[data-cy-files-list-row-name="pictures"] .files-list__row-name-text').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Click folder 'norway'
-            self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=30000)
+            self.page.locator('tr[data-cy-files-list-row-name="Norway"] .files-list__row-name-text').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Open picture - click on the row name to avoid canvas overlay issues
