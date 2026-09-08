@@ -61,6 +61,7 @@ prometheus_data/
 
 # Playwright
 playwright/.auth/
+auth.json
 
 # Screenshots from test failures
 screenshots/
