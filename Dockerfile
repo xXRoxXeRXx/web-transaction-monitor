@@ -4,8 +4,19 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     curl \
+    gnupg \
     procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install the stable Google Chrome channel used by the production monitor.
+RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+    | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+    > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -19,8 +30,7 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root
 
-# Install Playwright browsers (Chromium only for now to save space/time, can add others)
-RUN playwright install chromium
+# Install Playwright runtime dependencies for the browser channel.
 RUN playwright install-deps chromium
 
 # Copy application code

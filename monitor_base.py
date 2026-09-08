@@ -62,6 +62,8 @@ class MonitorBase(ABC):
         self.headless = headless
         self.playwright: Optional[object] = None
         self.browser: Optional[Browser] = None
+        self.context: Optional[object] = None
+        self.external_browser = False
         self.page: Optional[Page] = None
         
         # Create screenshots directory if it doesn't exist
@@ -134,14 +136,42 @@ Error Type: {error_type}
     def setup(self) -> None:
         """Initializes Playwright"""
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=self.headless)
-        # Use default system locale for language-independent testing
-        self.page = self.browser.new_page()
+        launch_options = {"headless": self.headless}
+        browser_channel = os.getenv("PLAYWRIGHT_CHANNEL")
+        if browser_channel:
+            launch_options["channel"] = browser_channel
+        if os.getenv("PLAYWRIGHT_NO_SANDBOX", "false").lower() in ("true", "1", "yes"):
+            launch_options["args"] = ["--no-sandbox", "--disable-dev-shm-usage"]
+
+        cdp_url = os.getenv("PLAYWRIGHT_CDP_URL")
+        if cdp_url:
+            self.browser = self.playwright.chromium.connect_over_cdp(cdp_url)
+            self.context = self.browser.contexts[0]
+            self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
+            self.external_browser = True
+            return
+
+        user_data_dir = os.getenv("PLAYWRIGHT_USER_DATA_DIR")
+        if user_data_dir:
+            self.context = self.playwright.chromium.launch_persistent_context(
+                user_data_dir,
+                **launch_options,
+            )
+            self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
+            return
+
+        self.browser = self.playwright.chromium.launch(**launch_options)
+        storage_state_path = os.getenv("PLAYWRIGHT_STORAGE_STATE")
+        if storage_state_path:
+            self.context = self.browser.new_context(storage_state=storage_state_path)
+            self.page = self.context.new_page()
+        else:
+            self.page = self.browser.new_page()
 
     def teardown(self) -> None:
         """Cleans up Playwright - robust cleanup with error handling"""
         try:
-            if self.page:
+            if self.page and not self.external_browser:
                 try:
                     self.page.close()
                 except Exception as e:
@@ -149,6 +179,15 @@ Error Type: {error_type}
         except Exception:
             pass
         
+        try:
+            if self.context and not self.external_browser:
+                try:
+                    self.context.close()
+                except Exception as e:
+                    logger.warning(f"[{self.usecase_name}] Failed to close context: {e}")
+        except Exception:
+            pass
+
         try:
             if self.browser:
                 try:
@@ -169,6 +208,7 @@ Error Type: {error_type}
         
         # Force cleanup of references to help garbage collection
         self.page = None
+        self.context = None
         self.browser = None
         self.playwright = None
 
@@ -197,7 +237,7 @@ Error Type: {error_type}
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()
             raise
 
-    def execute(self) -> None:
+    def execute(self) -> bool:
         """
         Full execution wrapper: Setup -> Run -> Teardown -> Record Success/Fail
         Note: Screenshots are taken by measure_step() on step failures.
@@ -218,6 +258,7 @@ Error Type: {error_type}
         finally:
             self.teardown()
             TRANS_SUCCESS.labels(usecase=self.usecase_name).set(1 if success else 0)
+        return success
 
     @abstractmethod
     def run(self) -> None:

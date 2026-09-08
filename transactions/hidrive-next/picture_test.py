@@ -26,7 +26,7 @@ class HiDriveNextPictureTest(MonitorBase):
         def login_logic():
             # Robust Cookie Acceptance
             try:
-                self.page.click("#selectAll", timeout=30000)
+                self.page.locator('button#selectAll[data-testid="confirm-all"]').click(timeout=30000)
             except Exception:
                 pass
             
@@ -76,12 +76,12 @@ class HiDriveNextPictureTest(MonitorBase):
                 logger.info(f"URL after retry email submit: {self.page.url}")
             
             # Now wait for password field to appear (use exact selector from HTML)
-            password_field = self.page.locator("input[type='password'][name='password']")
+            password_field = self.page.locator("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])")
             password_field.wait_for(state="visible", timeout=30000)
             
             # Fill password and submit
             logger.info("Password field visible - filling password")
-            self.page.fill("input[type='password'][name='password']", password)
+            self.page.fill("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])", password)
             self.page.wait_for_timeout(1000)  # Wait 1 second after filling
             self.page.click("button#button--with-loader", timeout=30000)
             
@@ -106,9 +106,9 @@ class HiDriveNextPictureTest(MonitorBase):
                     logger.info(f"URL after retry email submit: {self.page.url}")
                 
                 # Fill password again
-                password_field_retry = self.page.locator("input[type='password'][name='password']")
+                password_field_retry = self.page.locator("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])")
                 password_field_retry.wait_for(state="visible", timeout=30000)
-                self.page.fill("input[type='password'][name='password']", password)
+                self.page.fill("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])", password)
                 self.page.wait_for_timeout(1000)
                 self.page.click("button#button--with-loader", timeout=30000)
                 self.page.wait_for_load_state("networkidle", timeout=30000)
@@ -122,11 +122,11 @@ class HiDriveNextPictureTest(MonitorBase):
         # Step 3: Browse and open picture
         def browse_logic():
             # Click folder 'pictures'
-            self.page.locator('tr:nth-child(3) > .files-list__row-name > .files-list__row-icon > .material-design-icon > .material-design-icon__svg > path').click(timeout=30000)
+            self.page.locator('tr[data-cy-files-list-row-name="pictures"] .files-list__row-name-text').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Click folder 'norway'
-            self.page.locator('.material-design-icon.folder-icon > .material-design-icon__svg > path').click(timeout=30000)
+            self.page.locator('tr[data-cy-files-list-row-name="norway"] .files-list__row-name-text').click(timeout=30000)
             self.page.wait_for_load_state("networkidle", timeout=30000)
             
             # Open picture - click on the row name to avoid canvas overlay issues
@@ -142,8 +142,8 @@ class HiDriveNextPictureTest(MonitorBase):
 
         # Step 4: Close and Logout
         def logout_logic():
-            # Close Preview using class and aria-label (language-independent)
-            self.page.locator('button.header-close[aria-label="Close"]').click(timeout=30000)
+            # Close Preview using its stable class
+            self.page.locator('button.header-close').click(timeout=30000)
             
             # Logout using data-qa attributes (language-independent)
             self.page.locator('ionos-icons[role="button"][aria-label="User Menu"]').click(timeout=30000)

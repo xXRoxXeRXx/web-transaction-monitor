@@ -14,12 +14,17 @@ class MagentaCloudDocumentTest(MonitorBase):
         login_url = os.getenv('MAGENTACLOUD_URL', 'https://magentacloud.example.com/login')
         username = os.getenv('MAGENTACLOUD_USER')
         password = os.getenv('MAGENTACLOUD_PASS')
+        created_document_name = ""
 
         # Step 1: Go to start URL
         self.measure_step("01_Go to start URL", lambda: self.page.goto(login_url))
 
         # Step 2: Cookie & Login
         def login_logic():
+            if self.page.locator('.files-list').is_visible(timeout=5000):
+                logger.info("MagentaCloud session restored from Playwright storage state")
+                return
+
             # Accept cookies (language-independent)
             try:
                 self.page.locator('button[data-action="accept-all"], button:has-text("Alle akzeptieren"), button:has-text("Accept all")').first.click(timeout=30000)
@@ -27,13 +32,13 @@ class MagentaCloudDocumentTest(MonitorBase):
                 pass
 
             # Username field (language-independent - uses input type and name/id)
-            username_field = self.page.locator('input[type="text"][name*="user" i], input[type="text"][name*="username" i], input[type="email"]').first
+            username_field = self.page.locator('input[name="pw_usr"]:visible')
             username_field.wait_for(state="visible", timeout=30000)
             username_field.click()
             username_field.fill(username)
             
             # Submit button (scale-button custom element)
-            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
+            self.page.locator('button[name="pw_submit"]:not(.btn-hidden)').click(timeout=30000)
 
             # Password field (language-independent)
             password_field = self.page.locator('input[type="password"]').first
@@ -42,10 +47,26 @@ class MagentaCloudDocumentTest(MonitorBase):
             password_field.fill(password)
             
             # Submit password (scale-button)
-            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
+            self.page.locator('button[name="pw_submit"]:not(.btn-hidden)').click(timeout=30000)
 
             # Wait for navigation after password submit
             self.page.wait_for_load_state("networkidle", timeout=30000)
+
+            passkey_remember = self.page.locator('scale-button#dont_ask_again')
+            if passkey_remember.is_visible(timeout=2000):
+                passkey_remember.click(timeout=10000)
+                self.page.wait_for_load_state("networkidle", timeout=30000)
+            else:
+                passkey_later = self.page.locator('scale-button#cancel')
+                if not passkey_later.is_visible(timeout=2000):
+                    passkey_later = self.page.locator('scale-button[variant="secondary"][name="cancel"]')
+                if passkey_later.is_visible(timeout=2000):
+                    passkey_later.click(timeout=10000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+
+            blocked_login = self.page.locator('h1:has-text("Probleme bei der Anmeldung"), h1:has-text("Problems signing in")')
+            if blocked_login.is_visible(timeout=2000):
+                raise RuntimeError("Telekom blocked the login: required login features are temporarily unavailable")
             
             # Check for OIDC error and retry if needed
             try:
@@ -83,11 +104,16 @@ class MagentaCloudDocumentTest(MonitorBase):
 
        # Step 3: Create and edit document
         def create_document_logic():
+            nonlocal created_document_name
+
             # Click "Neu" button using class (language-independent) - increased timeout
             self.page.locator('button.action-item__menutoggle:has(.plus-icon)').click(timeout=30000)
             
             # Click "Neues Dokument" using data-cy (language-independent)
             self.page.locator('[data-cy-upload-picker-menu-entry="template-new-richdocuments-1"]').click(timeout=30000)
+
+            # Keep the generated name so cleanup targets exactly this document
+            created_document_name = self.page.locator('[role="dialog"] input').input_value()
             
             # Click "Erstellen" using data-cy (language-independent)
             self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=30000)
@@ -98,8 +124,7 @@ class MagentaCloudDocumentTest(MonitorBase):
             # Get the iframe (use dynamic name detection)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
             
-            # Click in document area and type text
-            iframe_locator.locator('.leaflet-layer').click(timeout=30000)
+            # Type directly into Collabora's clipboard input; the canvas intercepts clicks
             iframe_locator.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)
             
             # Wait for document canvas to confirm content is rendered
@@ -111,7 +136,7 @@ class MagentaCloudDocumentTest(MonitorBase):
         def close_document_logic():
             # Close document in Collabora using ID (language-independent)
             iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
-            iframe_locator.locator('button#closebutton').click(timeout=30000)
+            iframe_locator.locator('#closebutton').click(timeout=30000)
             
             # Wait for return to file list
             self.page.wait_for_selector('.files-list', timeout=30000)
@@ -120,8 +145,11 @@ class MagentaCloudDocumentTest(MonitorBase):
 
         # Step 5: Delete document
         def delete_document_logic():
-            # Click actions menu for the document (language-independent)
-            self.page.locator('tr[data-cy-files-list-row]:has-text("Neues") button.action-item__menutoggle').first.click(timeout=30000)
+            # Click actions menu for the exact document created in this run
+            document_row = self.page.locator(
+                f'tr[data-cy-files-list-row][data-cy-files-list-row-name="{created_document_name}"]'
+            )
+            document_row.locator('button.action-item__menutoggle').click(timeout=30000)
             
             # Click delete using data-cy (language-independent)
             self.page.locator('[data-cy-files-list-row-action="delete"]').click(timeout=30000)

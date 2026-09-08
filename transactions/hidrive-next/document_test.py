@@ -30,7 +30,7 @@ class HiDriveNextDocumentTest(MonitorBase):
         def login_logic():
             # Robust Cookie Acceptance
             try:
-                self.page.click("#selectAll", timeout=30000)
+                self.page.locator('button#selectAll[data-testid="confirm-all"]').click(timeout=30000)
             except Exception:
                 pass
             
@@ -80,12 +80,12 @@ class HiDriveNextDocumentTest(MonitorBase):
                 logger.info(f"URL after retry email submit: {self.page.url}")
             
             # Now wait for password field to appear (use exact selector from HTML)
-            password_field = self.page.locator("input[type='password'][name='password']")
+            password_field = self.page.locator("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])")
             password_field.wait_for(state="visible", timeout=30000)
             
             # Fill password and submit
             logger.info("Password field visible - filling password")
-            self.page.fill("input[type='password'][name='password']", password)
+            self.page.fill("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])", password)
             self.page.wait_for_timeout(1000)  # Wait 1 second after filling
             self.page.click("button#button--with-loader", timeout=30000)
             
@@ -110,9 +110,9 @@ class HiDriveNextDocumentTest(MonitorBase):
                     logger.info(f"URL after retry email submit: {self.page.url}")
                 
                 # Fill password again
-                password_field_retry = self.page.locator("input[type='password'][name='password']")
+                password_field_retry = self.page.locator("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])")
                 password_field_retry.wait_for(state="visible", timeout=30000)
-                self.page.fill("input[type='password'][name='password']", password)
+                self.page.fill("input[type='password'][name='password']:not(.hidden):not([name='hiddenPassword'])", password)
                 self.page.wait_for_timeout(1000)
                 self.page.click("button#button--with-loader", timeout=30000)
                 self.page.wait_for_load_state("networkidle", timeout=30000)

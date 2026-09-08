@@ -174,8 +174,12 @@ def run_test(test_id: str, headless: bool = False) -> bool:
     test = test_class()
     
     try:
-        test.execute()
+        success = test.execute()
         print('='*60)
+        if not success:
+            print(f"❌ {test_id} failed")
+            print('='*60)
+            return False
         print(f"✅ {test_id} completed successfully!")
         print('='*60)
         return True

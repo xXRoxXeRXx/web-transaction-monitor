@@ -20,6 +20,10 @@ class MagentaCloudSettingsTest(MonitorBase):
 
         # Step 2: Cookie & Login
         def login_logic():
+            if self.page.locator('.files-list').is_visible(timeout=5000):
+                logger.info("MagentaCloud session restored from Playwright storage state")
+                return
+
             # Accept cookies (language-independent)
             try:
                 self.page.locator('button[data-action="accept-all"], button:has-text("Alle akzeptieren"), button:has-text("Accept all")').first.click(timeout=30000)
@@ -27,13 +31,13 @@ class MagentaCloudSettingsTest(MonitorBase):
                 pass
 
             # Username field (language-independent - uses input type and name/id)
-            username_field = self.page.locator('input[type="text"][name*="user" i], input[type="text"][name*="username" i], input[type="email"]').first
+            username_field = self.page.locator('input[name="pw_usr"]:visible')
             username_field.wait_for(state="visible", timeout=30000)
             username_field.click()
             username_field.fill(username)
             
             # Submit button (scale-button custom element)
-            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
+            self.page.locator('button[name="pw_submit"]:not(.btn-hidden)').click(timeout=30000)
 
             # Password field (language-independent)
             password_field = self.page.locator('input[type="password"]').first
@@ -42,10 +46,26 @@ class MagentaCloudSettingsTest(MonitorBase):
             password_field.fill(password)
             
             # Submit password (scale-button)
-            self.page.locator('scale-button[type="submit"], scale-button[name="pw_submit"]').first.click(timeout=30000)
+            self.page.locator('button[name="pw_submit"]:not(.btn-hidden)').click(timeout=30000)
 
             # Wait for navigation after password submit
             self.page.wait_for_load_state("networkidle", timeout=30000)
+
+            passkey_remember = self.page.locator('scale-button#dont_ask_again')
+            if passkey_remember.is_visible(timeout=2000):
+                passkey_remember.click(timeout=10000)
+                self.page.wait_for_load_state("networkidle", timeout=30000)
+            else:
+                passkey_later = self.page.locator('scale-button#cancel')
+                if not passkey_later.is_visible(timeout=2000):
+                    passkey_later = self.page.locator('scale-button[variant="secondary"][name="cancel"]')
+                if passkey_later.is_visible(timeout=2000):
+                    passkey_later.click(timeout=10000)
+                    self.page.wait_for_load_state("networkidle", timeout=30000)
+
+            blocked_login = self.page.locator('h1:has-text("Probleme bei der Anmeldung"), h1:has-text("Problems signing in")')
+            if blocked_login.is_visible(timeout=2000):
+                raise RuntimeError("Telekom blocked the login: required login features are temporarily unavailable")
             
             # Check for OIDC error and handle gracefully
             try:

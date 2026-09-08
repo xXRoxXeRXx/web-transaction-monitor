@@ -13,6 +13,9 @@ services:
       - ./cleanup_processes.sh:/app/cleanup_processes.sh  # Zombie process cleanup script
     env_file:
       - .env
+    environment:
+      PLAYWRIGHT_CHANNEL: chrome
+      PLAYWRIGHT_NO_SANDBOX: "true"
     restart: unless-stopped
     # Increase resource limits to prevent process exhaustion
     mem_limit: 2g
