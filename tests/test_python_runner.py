@@ -70,6 +70,27 @@ class RegularClass:
             assert result is False  # Should return False on parse error
         finally:
             os.unlink(temp_file)
+
+    def test_missing_required_environment_variables(self, monkeypatch):
+        """Test detection of environment variables without fallback values."""
+        runner = PythonRunner()
+        monkeypatch.delenv("REQUIRED_VALUE", raising=False)
+        monkeypatch.setenv("CONFIGURED_VALUE", "configured")
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as file:
+            file.write('''
+import os
+
+required = os.getenv("REQUIRED_VALUE")
+configured = os.getenv("CONFIGURED_VALUE")
+optional = os.getenv("OPTIONAL_VALUE", "default")
+''')
+            temp_file = file.name
+
+        try:
+            assert runner._missing_required_environment_variables(temp_file) == ["REQUIRED_VALUE"]
+        finally:
+            os.unlink(temp_file)
     
     @patch('runners.python_runner.importlib.util.spec_from_file_location')
     @patch('runners.python_runner.importlib.util.module_from_spec')

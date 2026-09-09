@@ -132,7 +132,7 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 5,
+                "w": 4,
                 "x": 0,
                 "y": 4
             },
@@ -198,8 +198,8 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 5,
-                "x": 5,
+                "w": 4,
+                "x": 4,
                 "y": 4
             },
             "id": 3,
@@ -264,8 +264,8 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 5,
-                "x": 10,
+                "w": 4,
+                "x": 8,
                 "y": 4
             },
             "id": 4,
@@ -330,8 +330,8 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 5,
-                "x": 15,
+                "w": 4,
+                "x": 12,
                 "y": 4
             },
             "id": 5,
@@ -397,7 +397,7 @@
             "gridPos": {
                 "h": 6,
                 "w": 4,
-                "x": 20,
+                "x": 16,
                 "y": 4
             },
             "id": 13,
@@ -423,6 +423,72 @@
                 }
             ],
             "title": "🌺 MagentaCloud - 24h Success Rate",
+            "type": "gauge"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 90
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 95
+                            },
+                            {
+                                "color": "green",
+                                "value": 98
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 4,
+                "x": 20,
+                "y": 4
+            },
+            "id": 15,
+            "options": {
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true,
+                "text": {}
+            },
+            "pluginVersion": "8.0.0",
+            "targets": [
+                {
+                    "expr": "avg(avg_over_time(transaction_success{usecase=~\".*ionos.*mail.*\"}[24h])) * 100",
+                    "legendFormat": "IONOS Mail",
+                    "refId": "A"
+                }
+            ],
+            "title": "IONOS Mail - 24h Success Rate",
             "type": "gauge"
         },
         {
@@ -1103,6 +1169,94 @@
             ],
             "title": "🌺 MagentaCloud - $magentacloud_test",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "Duration (seconds)",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 25,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 24,
+                "x": 0,
+                "y": 53
+            },
+            "id": 16,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "mean",
+                        "lastNotNull",
+                        "max"
+                    ],
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "sortBy": "Mean",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "pluginVersion": "8.0.0",
+            "targets": [
+                {
+                    "expr": "transaction_duration_seconds{usecase=\"$ionos_mail_test\"}",
+                    "legendFormat": "{{step}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "IONOS Mail - $ionos_mail_test",
+            "type": "timeseries"
         }
     ],
     "refresh": "30s",
@@ -1214,6 +1368,28 @@
                 "name": "magentacloud_test",
                 "options": [],
                 "query": "label_values(transaction_duration_seconds{usecase=~\".*magentacloud.*\"}, usecase)",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "tagValuesQuery": "",
+                "tags": [],
+                "tagsQuery": "",
+                "type": "query",
+                "useTags": false
+            },
+            {
+                "allValue": ".*",
+                "current": {},
+                "datasource": "Prometheus",
+                "definition": "label_values(transaction_duration_seconds{usecase=~\".*ionos.*mail.*\"}, usecase)",
+                "hide": 0,
+                "includeAll": false,
+                "label": "IONOS Mail Test",
+                "multi": false,
+                "name": "ionos_mail_test",
+                "options": [],
+                "query": "label_values(transaction_duration_seconds{usecase=~\".*ionos.*mail.*\"}, usecase)",
                 "refresh": 1,
                 "regex": "",
                 "skipUrlSync": false,

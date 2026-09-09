@@ -20,6 +20,18 @@ class PythonRunner:
         and executes it accordingly.
         """
         try:
+            missing_variables = self._missing_required_environment_variables(file_path)
+            if missing_variables:
+                actual_name = usecase_name or os.path.basename(file_path).replace('.py', '')
+                logger.error(
+                    "Skipping %s: missing required environment variables: %s",
+                    file_path,
+                    ", ".join(missing_variables),
+                )
+                TRANS_SUCCESS.labels(usecase=actual_name).set(0)
+                TRANS_LAST_RUN.labels(usecase=actual_name).set_to_current_time()
+                return
+
             if self._has_monitor_base_class(file_path):
                 self._run_class(file_path, usecase_name)
             else:
@@ -30,6 +42,44 @@ class PythonRunner:
             actual_name = usecase_name or os.path.basename(file_path).replace('.py', '')
             TRANS_SUCCESS.labels(usecase=actual_name).set(0)
             TRANS_LAST_RUN.labels(usecase=actual_name).set_to_current_time()
+
+    def _missing_required_environment_variables(self, file_path: str) -> list[str]:
+        """Return unset environment variables read without a fallback value."""
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                tree = ast.parse(file.read(), filename=file_path)
+        except (OSError, SyntaxError):
+            return []
+
+        required_variables: set[str] = set()
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "os"
+                and node.func.attr == "getenv"
+                and len(node.args) == 1
+                and isinstance(node.args[0], ast.Constant)
+                and isinstance(node.args[0].value, str)
+            ):
+                required_variables.add(node.args[0].value)
+            elif (
+                isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Attribute)
+                and isinstance(node.value.value, ast.Name)
+                and node.value.value.id == "os"
+                and node.value.attr == "environ"
+                and isinstance(node.slice, ast.Constant)
+                and isinstance(node.slice.value, str)
+            ):
+                required_variables.add(node.slice.value)
+
+        return sorted(
+            variable
+            for variable in required_variables
+            if not os.getenv(variable)
+        )
 
     def _has_monitor_base_class(self, file_path: str) -> bool:
         """
