@@ -18,6 +18,7 @@ Usage:
     python run_test.py magentacloud                 # Run MagentaCloud Picture Test
     python run_test.py magentacloud-settings        # Run MagentaCloud Settings Test
     python run_test.py magentacloud-document        # Run MagentaCloud Document Test
+    python run_test.py ionos-mail                   # Run IONOS Mail Test
     python run_test.py all                          # Run all tests sequentially
 """
 import sys
@@ -142,6 +143,11 @@ TESTS = {
         'dir': 'magentacloud',
         'file': 'document_test.py',
         'class': 'MagentaCloudDocumentTest',
+    },
+    'ionos-mail': {
+        'dir': 'ionos-mail',
+        'file': 'mail_test.py',
+        'class': 'IonosMailTest',
     }
 }
 

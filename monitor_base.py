@@ -237,6 +237,7 @@ Error Type: {error_type}
             self._take_screenshot(step_name, "step_failure")
             self._save_page_html(step_name, "step_failure")
             self._save_error_stack(step_name, "step_failure", exc)
+            TRANS_DURATION.labels(usecase=self.usecase_name, step=step_name).set(duration)
             # Always log errors, regardless of DEBUG mode
             logger.error(f"[{self.usecase_name}] Step '{step_name}' FAILED after {duration:.2f}s", exc_info=True)
             STEP_FAILURE.labels(usecase=self.usecase_name, step=step_name).inc()

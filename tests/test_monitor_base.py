@@ -93,6 +93,7 @@ class TestMonitorBase:
             monitor.measure_step("test_step", action)
         
         action.assert_called_once()
+        assert TRANS_DURATION.labels(usecase="test_usecase", step="test_step")._value.get() == 2.0
     
     @patch('monitor_base.sync_playwright')
     def test_execute_success(self, mock_playwright):
