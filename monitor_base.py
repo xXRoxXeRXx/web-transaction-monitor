@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import subprocess
+import threading
 import time
 import logging
 import os
@@ -173,49 +175,92 @@ Error Type: {error_type}
                 )
             self.page = self.browser.new_page()
 
+    def _force_kill_orphaned_browser_processes(self) -> None:
+        """Terminate stale Chromium/Chrome processes to recover from a hung browser session."""
+        try:
+            if os.name == "nt":
+                subprocess.run(
+                    [
+                        "powershell",
+                        "-NoProfile",
+                        "-Command",
+                        "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'chrome|chromium|msedge' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
+                    ],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=20,
+                )
+            else:
+                subprocess.run(
+                    [
+                        "bash",
+                        "-lc",
+                        "ps -eo pid,etimes,comm --no-headers 2>/dev/null | awk 'BEGIN{IGNORECASE=1} $2 ~ /chrome|chromium|msedge/ && $3 > 120 { print $1 }' | xargs -r kill -9 || true",
+                    ],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=20,
+                )
+        except Exception as e:
+            logger.warning(f"[{self.usecase_name}] Failed to force-kill orphaned browser processes: {e}")
+
+    def _close_with_timeout(self, close_callable: Callable[[], None], resource_name: str, timeout_seconds: int = 10) -> None:
+        """Close a resource in a separate thread, killing stale browsers if the close call hangs."""
+        if close_callable is None:
+            return
+
+        result: dict[str, object] = {}
+
+        def _runner() -> None:
+            try:
+                close_callable()
+            except Exception as exc:
+                result["error"] = exc
+
+        thread = threading.Thread(target=_runner, daemon=True)
+        thread.start()
+        thread.join(timeout_seconds)
+
+        if thread.is_alive():
+            logger.warning(
+                f"[{self.usecase_name}] {resource_name} close timed out after {timeout_seconds}s; forcing browser cleanup"
+            )
+            self._force_kill_orphaned_browser_processes()
+            return
+
+        if "error" in result:
+            logger.warning(f"[{self.usecase_name}] Failed to close {resource_name}: {result['error']}")
+
     def teardown(self) -> None:
         """Cleans up Playwright - robust cleanup with error handling"""
         try:
             if self.page and not self.external_browser:
-                try:
-                    self.page.close()
-                except Exception as e:
-                    logger.warning(f"[{self.usecase_name}] Failed to close page: {e}")
+                self._close_with_timeout(self.page.close, "page")
         except Exception:
             pass
-        
+
         try:
             if self.context and not self.external_browser:
-                try:
-                    self.context.close()
-                except Exception as e:
-                    logger.warning(f"[{self.usecase_name}] Failed to close context: {e}")
+                self._close_with_timeout(self.context.close, "context")
         except Exception:
             pass
 
         try:
             if self.browser:
-                try:
-                    self.browser.close()
-                except Exception as e:
-                    logger.warning(f"[{self.usecase_name}] Failed to close browser: {e}")
+                self._close_with_timeout(self.browser.close, "browser")
         except Exception:
             pass
-        
+
         try:
             if self.playwright:
-                try:
-                    self.playwright.stop()
-                except Exception as e:
-                    logger.warning(f"[{self.usecase_name}] Failed to stop playwright: {e}")
+                self._close_with_timeout(self.playwright.stop, "playwright")
         except Exception:
             pass
-        
-        # Force cleanup of references to help garbage collection
-        self.page = None
-        self.context = None
-        self.browser = None
-        self.playwright = None
+
+        # Keep references until this monitor instance is discarded; the timeout handler
+        # already ensures a hung browser does not block the scheduler thread.
 
     def measure_step(self, step_name: str, action: Callable[[], None]) -> None:
         """

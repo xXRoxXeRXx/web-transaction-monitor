@@ -114,13 +114,13 @@ optional = os.getenv("OPTIONAL_VALUE", "default")
         mock_monitor_instance = MagicMock()
         mock_monitor_class = MagicMock(return_value=mock_monitor_instance)
         
-        # Set up module dict to return our mock class
+# Set up module dict to return our mock class. Avoid including __builtins__ here,
+        # because the test is only validating the class-discovery logic and not module metadata.
         mock_module.__dict__ = {
             'MockMonitor': mock_monitor_class,
-            '__builtins__': {},
         }
-        
-        # Make isinstance and issubclass work
+
+        # Make isinstance and issubclass work for the mocked class object.
         with patch('runners.python_runner.isinstance', return_value=True), \
              patch('runners.python_runner.issubclass', return_value=True):
             

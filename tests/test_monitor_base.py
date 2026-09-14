@@ -1,12 +1,13 @@
 """
 Unit tests for monitor_base.py
 """
+import time
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from monitor_base import MonitorBase, TRANS_DURATION, TRANS_SUCCESS, TRANS_LAST_RUN, STEP_FAILURE
 
 
-class TestMonitor(MonitorBase):
+class MonitorTestHelper(MonitorBase):
     """Concrete implementation for testing"""
     def run(self):
         self.measure_step("test_step", lambda: None)
@@ -17,7 +18,7 @@ class TestMonitorBase:
     
     def test_init(self):
         """Test MonitorBase initialization"""
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         assert monitor.usecase_name == "test_usecase"
         assert monitor.headless is True
         assert monitor.playwright is None
@@ -26,7 +27,7 @@ class TestMonitorBase:
     
     def test_init_with_headless_false(self):
         """Test MonitorBase initialization with headless=False"""
-        monitor = TestMonitor(usecase_name="test_usecase", headless=False)
+        monitor = MonitorTestHelper(usecase_name="test_usecase", headless=False)
         assert monitor.headless is False
     
     @patch('monitor_base.sync_playwright')
@@ -40,7 +41,7 @@ class TestMonitorBase:
         mock_pw_instance.chromium.launch.return_value = mock_browser
         mock_browser.new_page.return_value = mock_page
         
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         monitor.setup()
         
         assert monitor.playwright == mock_pw_instance
@@ -50,7 +51,7 @@ class TestMonitorBase:
     
     def test_teardown(self):
         """Test teardown method closes resources"""
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         monitor.page = MagicMock()
         monitor.browser = MagicMock()
         monitor.playwright = MagicMock()
@@ -63,16 +64,35 @@ class TestMonitorBase:
     
     def test_teardown_with_none_values(self):
         """Test teardown handles None values gracefully"""
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         # Should not raise any exception
         monitor.teardown()
+
+    def test_teardown_force_kills_hung_browser_processes(self):
+        """Test teardown recovers when browser.close hangs and kills orphaned browser processes."""
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
+        monitor.page = MagicMock()
+        monitor.context = MagicMock()
+        monitor.browser = MagicMock()
+        monitor.playwright = MagicMock()
+
+        def hang_close():
+            time.sleep(0.3)
+
+        monitor.browser.close.side_effect = hang_close
+        monitor.browser.close.__name__ = "close"
+
+        with patch.object(monitor, '_force_kill_orphaned_browser_processes') as mock_kill:
+            monitor._close_with_timeout(monitor.browser.close, "browser", timeout_seconds=0.05)
+
+        mock_kill.assert_called_once()
     
     @patch('monitor_base.time.time')
     def test_measure_step_success(self, mock_time):
         """Test measure_step records successful step execution"""
         mock_time.side_effect = [100.0, 105.5]  # start, end
         
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         action = Mock()
         
         monitor.measure_step("test_step", action)
@@ -84,14 +104,14 @@ class TestMonitorBase:
     @patch('monitor_base.time.time')
     def test_measure_step_failure(self, mock_time):
         """Test measure_step handles exceptions correctly"""
-        mock_time.side_effect = [100.0, 102.0]
-        
-        monitor = TestMonitor(usecase_name="test_usecase")
+        mock_time.side_effect = [100.0, 102.0, 102.0, 102.0, 102.0]
+
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         action = Mock(side_effect=ValueError("Test error"))
-        
+
         with pytest.raises(ValueError, match="Test error"):
             monitor.measure_step("test_step", action)
-        
+
         action.assert_called_once()
         assert TRANS_DURATION.labels(usecase="test_usecase", step="test_step")._value.get() == 2.0
     
@@ -101,7 +121,7 @@ class TestMonitorBase:
         mock_pw_instance = MagicMock()
         mock_playwright.return_value.start.return_value = mock_pw_instance
         
-        monitor = TestMonitor(usecase_name="test_usecase")
+        monitor = MonitorTestHelper(usecase_name="test_usecase")
         monitor.execute()
         
         # Should call setup, run, and teardown
@@ -133,7 +153,7 @@ class TestMetricsIntegration:
         mock_pw_instance = MagicMock()
         mock_playwright.return_value.start.return_value = mock_pw_instance
         
-        monitor = TestMonitor(usecase_name="metrics_test")
+        monitor = MonitorTestHelper(usecase_name="metrics_test")
         monitor.execute()
         
         # Check that success metric is set (we can't easily assert on Prometheus metrics,
