@@ -52,15 +52,18 @@ class TestMonitorBase:
     def test_teardown(self):
         """Test teardown method closes resources"""
         monitor = MonitorTestHelper(usecase_name="test_usecase")
-        monitor.page = MagicMock()
-        monitor.browser = MagicMock()
-        monitor.playwright = MagicMock()
-        
+        page = MagicMock()
+        browser = MagicMock()
+        playwright = MagicMock()
+        monitor.page = page
+        monitor.browser = browser
+        monitor.playwright = playwright
+
         monitor.teardown()
-        
-        monitor.page.close.assert_called_once()
-        monitor.browser.close.assert_called_once()
-        monitor.playwright.stop.assert_called_once()
+
+        page.close.assert_called_once()
+        browser.close.assert_called_once()
+        playwright.stop.assert_called_once()
     
     def test_teardown_with_none_values(self):
         """Test teardown handles None values gracefully"""
@@ -69,17 +72,17 @@ class TestMonitorBase:
         monitor.teardown()
 
     def test_teardown_force_kills_hung_browser_processes(self):
-        """Test teardown recovers when browser.close hangs and kills orphaned browser processes."""
+        """Test teardown recovers when browser.close throws and triggers orphan cleanup."""
         monitor = MonitorTestHelper(usecase_name="test_usecase")
         monitor.page = MagicMock()
         monitor.context = MagicMock()
         monitor.browser = MagicMock()
         monitor.playwright = MagicMock()
 
-        def hang_close():
-            time.sleep(0.3)
+        def raise_error():
+            raise RuntimeError("close failed")
 
-        monitor.browser.close.side_effect = hang_close
+        monitor.browser.close.side_effect = raise_error
         monitor.browser.close.__name__ = "close"
 
         with patch.object(monitor, '_force_kill_orphaned_browser_processes') as mock_kill:

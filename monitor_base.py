@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import subprocess
-import threading
 import time
 import logging
 import os
@@ -206,35 +205,36 @@ Error Type: {error_type}
         except Exception as e:
             logger.warning(f"[{self.usecase_name}] Failed to force-kill orphaned browser processes: {e}")
 
-    def _close_with_timeout(self, close_callable: Callable[[], None], resource_name: str, timeout_seconds: int = 10) -> None:
-        """Close a resource in a separate thread, killing stale browsers if the close call hangs."""
+    def _close_with_timeout(self, close_callable: Callable[[], None], resource_name: str, timeout_seconds: float = 10.0) -> None:
+        """Call a Playwright close method in-band and force a process cleanup only if it raises an error.
+
+        Using another thread for Playwright sync objects is unsafe and triggers the greenlet
+        "Cannot switch to a different thread" error seen in production.
+        """
         if close_callable is None:
             return
 
-        result: dict[str, object] = {}
-
-        def _runner() -> None:
-            try:
-                close_callable()
-            except Exception as exc:
-                result["error"] = exc
-
-        thread = threading.Thread(target=_runner, daemon=True)
-        thread.start()
-        thread.join(timeout_seconds)
-
-        if thread.is_alive():
-            logger.warning(
-                f"[{self.usecase_name}] {resource_name} close timed out after {timeout_seconds}s; forcing browser cleanup"
-            )
+        start = time.monotonic()
+        try:
+            close_callable()
+        except Exception as e:
+            elapsed = time.monotonic() - start
+            logger.warning(f"[{self.usecase_name}] Failed to close {resource_name} after {elapsed:.2f}s: {e}")
             self._force_kill_orphaned_browser_processes()
             return
 
-        if "error" in result:
-            logger.warning(f"[{self.usecase_name}] Failed to close {resource_name}: {result['error']}")
+        elapsed = time.monotonic() - start
+        if elapsed > timeout_seconds:
+            logger.warning(f"[{self.usecase_name}] {resource_name} close exceeded timeout ({elapsed:.2f}s > {timeout_seconds}s); forcing cleanup")
+            self._force_kill_orphaned_browser_processes()
 
     def teardown(self) -> None:
-        """Cleans up Playwright - robust cleanup with error handling"""
+        """Cleans up Playwright on the same thread it was created on.
+
+        Playwright sync objects are not safe to close from another thread. Cross-thread
+        shutdown is exactly what caused the "Cannot switch to a different thread" and
+        subsequent "Sync API inside asyncio loop" failures.
+        """
         try:
             if self.page and not self.external_browser:
                 self._close_with_timeout(self.page.close, "page")
@@ -259,8 +259,10 @@ Error Type: {error_type}
         except Exception:
             pass
 
-        # Keep references until this monitor instance is discarded; the timeout handler
-        # already ensures a hung browser does not block the scheduler thread.
+        self.page = None
+        self.context = None
+        self.browser = None
+        self.playwright = None
 
     def measure_step(self, step_name: str, action: Callable[[], None]) -> None:
         """
