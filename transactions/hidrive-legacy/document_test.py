@@ -48,8 +48,8 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             # Click login using data-qa
             self.page.click('[data-qa="login_submit"]')
             
-            # Wait for login to complete
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            # HiDrive is a SPA with persistent traffic; wait for concrete UI state.
+            self.page.wait_for_load_state("domcontentloaded", timeout=30000)
             self.page.wait_for_selector('.file-item-icon', timeout=30000)
 
         self.measure_step("02_Cookie & Login", login_logic)
@@ -86,9 +86,8 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             # Close the editor
             self.page.locator('.office-editor-close').click(timeout=30000)
             
-            # Wait for document list to appear and network to be idle
+            # Wait for document list to appear again.
             self.page.wait_for_selector('tile-item', timeout=30000)
-            self.page.wait_for_load_state("networkidle", timeout=30000)
 
         self.measure_step("04_Close document", close_document)
 
@@ -116,7 +115,7 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         def logout_logic():
             # Click logout link
             self.page.locator('a[href="#logout"]').click(timeout=30000)
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('input[name="username"]', timeout=30000)
 
         self.measure_step("06_Logout", logout_logic)
 

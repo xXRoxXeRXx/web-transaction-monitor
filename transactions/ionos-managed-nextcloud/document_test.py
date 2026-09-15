@@ -30,11 +30,10 @@ class IonosManagedNextcloudDocumentTest(MonitorBase):
             self.page.locator('input[data-login-form-input-password]').fill(password, timeout=30000)
             self.page.locator('button[data-login-form-submit]').click(timeout=30000)
             
-            # Wait for dashboard to load completely
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            # Nextcloud keeps background requests open; avoid brittle networkidle waits.
+            self.page.wait_for_load_state("domcontentloaded", timeout=30000)
             self.page.wait_for_selector(".files-list", timeout=30000)
-            # Ensure UI is fully interactive before proceeding
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.locator('button.action-item__menutoggle:has(.plus-icon)').wait_for(timeout=30000)
 
         self.measure_step("02_Login", login_logic)
 
@@ -54,11 +53,16 @@ class IonosManagedNextcloudDocumentTest(MonitorBase):
             # Click "Erstellen" using data-cy (language-independent)
             self.page.locator('button[data-cy-files-new-node-dialog-submit]').click(timeout=30000)
             
-            # Wait for Collabora iframe to load (can be slow in Docker/headless)
-            self.page.wait_for_selector('iframe[name^="collaboraframe"]', timeout=60000)
+            # Wait for Collabora iframe to load (name differs by deployment/version).
+            self.page.wait_for_selector(
+                'iframe[name^="collaboraframe"], iframe[name="collabora-online-viewer"]',
+                timeout=90000,
+            )
             
             # Get the iframe (use dynamic name detection)
-            iframe_locator = self.page.frame_locator('iframe[name^="collaboraframe"]')
+            iframe_locator = self.page.frame_locator(
+                'iframe[name^="collaboraframe"], iframe[name="collabora-online-viewer"]'
+            )
             
             # Type directly into Collabora's clipboard input; the canvas intercepts clicks
             iframe_locator.locator('#clipboard-area').fill('Dies ist ein Test!', timeout=30000)

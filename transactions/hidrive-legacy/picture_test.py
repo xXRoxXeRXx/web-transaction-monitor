@@ -52,17 +52,17 @@ class HiDriveLegacyPictureTest(MonitorBase):
         def browse_logic():
             # First folder - use .first to select the first matching element
             self.page.locator('.file-item-icon > svg > path').first.click()
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('tile-item', timeout=30000)
             
             # Second folder - again use .first after navigation
             self.page.locator('.file-item-icon > svg > path').first.click()
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('tile-item', timeout=30000)
             
             # Open picture (3rd item)
             self.page.locator('tile-item:nth-child(3) > .itemcontent > .file-item-icon > .thumbnail').click()
             
             # Wait for image to load (wait for viewer to be ready)
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('.filesviewer-overlay-close', timeout=30000)
             
             # Verify image viewer is open and image is loaded
             self.page.wait_for_selector('.imageview', timeout=30000)
@@ -76,7 +76,7 @@ class HiDriveLegacyPictureTest(MonitorBase):
             
             # Logout
             self.page.locator('a[href="#logout"]').click()
-            self.page.wait_for_load_state("networkidle", timeout=30000)
+            self.page.wait_for_selector('input[name="username"]', timeout=30000)
 
         self.measure_step("04_Close and Logout", logout_logic)
 
