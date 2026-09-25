@@ -2,12 +2,35 @@ import os
 import time
 import glob
 import logging
+from pathlib import Path
 from typing import Optional
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from prometheus_client import start_http_server
 from runners.python_runner import PythonRunner
+
+
+def load_env_file() -> None:
+    """Load project environment variables from .env if present, otherwise from .env.example."""
+    project_root = Path(__file__).resolve().parent
+    env_paths = [project_root / '.env', project_root / '.env.example']
+
+    for env_path in env_paths:
+        if not env_path.exists():
+            continue
+
+        with open(env_path, 'r', encoding='utf-8') as env_file:
+            for line in env_file:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+
+        break
+
+
+load_env_file()
 
 # Configuration
 METRICS_PORT = int(os.getenv('PROMETHEUS_PORT', 8000))
@@ -53,11 +76,11 @@ def load_and_schedule_usecases(scheduler: BackgroundScheduler) -> None:
         start_time = datetime.now() + timedelta(seconds=i)
         
         scheduler.add_job(
-            python_runner.run,
+            python_runner.run_with_timeout,
             'interval',
             seconds=CHECK_INTERVAL_SECONDS,
             next_run_time=start_time,
-            args=[py_file, name],
+            args=[py_file, name, max(30, int(os.getenv('MONITOR_TIMEOUT_SECONDS', '300')))],
             id=job_id,
             replace_existing=True
         )

@@ -49,20 +49,28 @@ else:
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Load environment variables from .env file
+# Load environment variables from .env file, falling back to .env.example
+# so local runs do not silently skip every monitor because credentials are missing.
 def load_env_file():
-    """Load environment variables from .env file if it exists."""
-    env_file = project_root / '.env'
-    if env_file.exists():
-        with open(env_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ[key.strip()] = value.strip()
-        print("✓ Loaded environment variables from .env file")
+    """Load environment variables from .env if present, otherwise from .env.example."""
+    env_files = [project_root / '.env', project_root / '.env.example']
+    loaded_file = None
+
+    for env_file in env_files:
+        if env_file.exists():
+            with open(env_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        os.environ.setdefault(key.strip(), value.strip())
+            loaded_file = env_file
+            break
+
+    if loaded_file:
+        print(f"✓ Loaded environment variables from {loaded_file.name}")
     else:
-        print("⚠ Warning: .env file not found. Using default values.")
+        print("⚠ Warning: .env and .env.example not found. Using default values.")
 
 load_env_file()
 

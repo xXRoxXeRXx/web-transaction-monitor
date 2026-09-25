@@ -14,6 +14,55 @@ class PythonRunner:
     def __init__(self) -> None:
         pass
 
+    def run_with_timeout(self, file_path: str, usecase_name: Optional[str] = None, timeout_seconds: Optional[int] = None) -> bool:
+        """Execute a monitor in a child Python process and abort it if it hangs.
+
+        The scheduler uses a single worker, so a hung browser job would block all future checks.
+        This wrapper keeps the scheduler responsive while still using the same monitor code.
+        """
+        if timeout_seconds is None:
+            timeout_seconds = max(30, int(os.getenv('MONITOR_TIMEOUT_SECONDS', '300')))
+
+        actual_name = usecase_name or os.path.basename(file_path).replace('.py', '')
+        project_root = os.getcwd()
+        env = os.environ.copy()
+        env["PYTHONPATH"] = project_root + os.pathsep + env.get("PYTHONPATH", "")
+
+        command = [
+            sys.executable,
+            "-c",
+            (
+                "import sys; "
+                "from runners.python_runner import PythonRunner; "
+                "runner = PythonRunner(); "
+                "runner.run(sys.argv[1], sys.argv[2])"
+            ),
+            file_path,
+            actual_name,
+        ]
+
+        logger.info("[%s] Starting monitor with timeout %ss", actual_name, timeout_seconds)
+        try:
+            subprocess.run(
+                command,
+                cwd=project_root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+            return True
+        except subprocess.TimeoutExpired:
+            logger.error(
+                "[%s] Monitor job timed out after %ss and was terminated to avoid blocking the scheduler.",
+                actual_name,
+                timeout_seconds,
+            )
+            TRANS_SUCCESS.labels(usecase=actual_name).set(0)
+            TRANS_LAST_RUN.labels(usecase=actual_name).set_to_current_time()
+            return False
+
     def run(self, file_path: str, usecase_name: Optional[str] = None) -> None:
         """
         Determines if the file contains a MonitorBase subclass or is a raw script,

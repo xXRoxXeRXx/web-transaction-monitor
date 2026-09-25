@@ -3,6 +3,7 @@ Unit tests for python_runner.py
 """
 import pytest
 import os
+import subprocess
 import tempfile
 from unittest.mock import Mock, patch, MagicMock
 from runners.python_runner import PythonRunner
@@ -202,6 +203,18 @@ optional = os.getenv("OPTIONAL_VALUE", "default")
         runner.run('/fake/file.py', 'test_case')
         
         mock_has_class.assert_called_once()
+
+    @patch('runners.python_runner.subprocess.run')
+    def test_run_class_with_timeout_stops_hung_job(self, mock_run):
+        """Test that a hung monitor is aborted after the configured timeout."""
+        runner = PythonRunner()
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=['python', '-c', 'test'], timeout=30)
+
+        result = runner.run_with_timeout('/fake/file.py', 'test_case', timeout_seconds=30)
+
+        assert result is False
+        mock_run.assert_called_once()
+        assert mock_run.call_args.kwargs['timeout'] == 30
 
 
 class TestPythonRunnerIntegration:
