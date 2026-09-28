@@ -12,22 +12,18 @@ from runners.python_runner import PythonRunner
 
 
 def load_env_file() -> None:
-    """Load project environment variables from .env if present, otherwise from .env.example."""
+    """Load project environment variables from .env when it is present."""
     project_root = Path(__file__).resolve().parent
-    env_paths = [project_root / '.env', project_root / '.env.example']
+    env_path = project_root / '.env'
+    if not env_path.exists():
+        return
 
-    for env_path in env_paths:
-        if not env_path.exists():
-            continue
-
-        with open(env_path, 'r', encoding='utf-8') as env_file:
-            for line in env_file:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ.setdefault(key.strip(), value.strip())
-
-        break
+    with open(env_path, 'r', encoding='utf-8') as env_file:
+        for line in env_file:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip())
 
 
 load_env_file()

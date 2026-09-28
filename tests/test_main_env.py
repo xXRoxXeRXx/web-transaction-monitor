@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 
-def test_load_env_file_falls_back_to_dotenv_example(monkeypatch):
+def test_load_env_file_does_not_load_dotenv_example(monkeypatch):
     root = Path(__file__).resolve().parents[1]
     env_path = root / ".env"
     if env_path.exists():
@@ -19,5 +19,5 @@ def test_load_env_file_falls_back_to_dotenv_example(monkeypatch):
 
     module.load_env_file()
 
-    assert os.environ.get("HIDRIVE_NEXT_USER") == "your_username"
-    assert os.environ.get("HIDRIVE_NEXT_PASS") == "your_password"
+    assert os.environ.get("HIDRIVE_NEXT_USER") is None
+    assert os.environ.get("HIDRIVE_NEXT_PASS") is None

@@ -27,6 +27,7 @@ from pathlib import Path
 import importlib.util
 import logging
 import os
+from runners.python_runner import PythonRunner
 
 # Configure logging - respect DEBUG environment variable
 debug_mode = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
@@ -49,28 +50,20 @@ else:
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Load environment variables from .env file, falling back to .env.example
-# so local runs do not silently skip every monitor because credentials are missing.
 def load_env_file():
-    """Load environment variables from .env if present, otherwise from .env.example."""
-    env_files = [project_root / '.env', project_root / '.env.example']
-    loaded_file = None
+    """Load local environment variables from .env when it is present."""
+    env_file = project_root / '.env'
+    if not env_file.exists():
+        print("⚠ Warning: .env not found. Service tests without configured credentials will be skipped.")
+        return
 
-    for env_file in env_files:
-        if env_file.exists():
-            with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        os.environ.setdefault(key.strip(), value.strip())
-            loaded_file = env_file
-            break
-
-    if loaded_file:
-        print(f"✓ Loaded environment variables from {loaded_file.name}")
-    else:
-        print("⚠ Warning: .env and .env.example not found. Using default values.")
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip())
+    print("✓ Loaded environment variables from .env")
 
 load_env_file()
 
@@ -173,6 +166,14 @@ def run_test(test_id: str, headless: bool = False) -> bool:
     
     # Load test module
     test_file = project_root / "transactions" / config['dir'] / config['file']
+    missing_variables = PythonRunner()._missing_required_environment_variables(str(test_file))
+    if missing_variables:
+        print(
+            f"⊘ Skipped {test_id}: missing required environment variables: "
+            f"{', '.join(missing_variables)}"
+        )
+        return True
+
     spec = importlib.util.spec_from_file_location(config['class'], test_file)
     test_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(test_module)
