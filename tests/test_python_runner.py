@@ -5,6 +5,7 @@ import pytest
 import os
 import subprocess
 import tempfile
+import time
 from unittest.mock import Mock, patch, MagicMock
 from runners.python_runner import PythonRunner
 
@@ -204,17 +205,28 @@ optional = os.getenv("OPTIONAL_VALUE", "default")
         
         mock_has_class.assert_called_once()
 
-    @patch('runners.python_runner.subprocess.run')
-    def test_run_class_with_timeout_stops_hung_job(self, mock_run):
-        """Test that a hung monitor is aborted after the configured timeout."""
+    @patch('runners.python_runner.force_kill_browser_processes')
+    @patch.object(PythonRunner, 'run')
+    def test_run_with_timeout_stops_hung_job(self, mock_run, mock_force_kill):
+        """A hung monitor thread is not waited on forever; browser processes are force-killed instead."""
         runner = PythonRunner()
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd=['python', '-c', 'test'], timeout=30)
+        mock_run.side_effect = lambda *args, **kwargs: time.sleep(1)
 
-        result = runner.run_with_timeout('/fake/file.py', 'test_case', timeout_seconds=30)
+        result = runner.run_with_timeout('/fake/file.py', 'test_case', timeout_seconds=0.05)
 
         assert result is False
-        mock_run.assert_called_once()
-        assert mock_run.call_args.kwargs['timeout'] == 30
+        mock_force_kill.assert_called_once()
+
+    @patch.object(PythonRunner, 'run')
+    def test_run_with_timeout_returns_true_when_job_finishes(self, mock_run):
+        """A job that finishes within the timeout reports success without touching browser processes."""
+        runner = PythonRunner()
+        mock_run.return_value = None
+
+        result = runner.run_with_timeout('/fake/file.py', 'test_case', timeout_seconds=5)
+
+        assert result is True
+        mock_run.assert_called_once_with('/fake/file.py', 'test_case')
 
 
 class TestPythonRunnerIntegration:

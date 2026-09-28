@@ -38,6 +38,38 @@ STEP_FAILURE = Counter(
     ["usecase", "step"]
 )
 
+def force_kill_browser_processes() -> None:
+    """Terminate stale Chromium/Chrome/Edge processes system-wide to recover from a hung session."""
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-Command",
+                    "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'chrome|chromium|msedge' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
+                ],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=20,
+            )
+        else:
+            subprocess.run(
+                [
+                    "bash",
+                    "-lc",
+                    "ps -eo pid,etimes,comm --no-headers 2>/dev/null | awk 'BEGIN{IGNORECASE=1} $2 ~ /chrome|chromium|msedge/ && $3 > 120 { print $1 }' | xargs -r kill -9 || true",
+                ],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=20,
+            )
+    except Exception as e:
+        logger.warning(f"Failed to force-kill orphaned browser processes: {e}")
+
+
 class MonitorBase(ABC):
     def _save_error_stack(self, step_name: str, error_type: str, exc: Exception) -> str:
         """
@@ -176,34 +208,7 @@ Error Type: {error_type}
 
     def _force_kill_orphaned_browser_processes(self) -> None:
         """Terminate stale Chromium/Chrome processes to recover from a hung browser session."""
-        try:
-            if os.name == "nt":
-                subprocess.run(
-                    [
-                        "powershell",
-                        "-NoProfile",
-                        "-Command",
-                        "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'chrome|chromium|msedge' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
-                    ],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=20,
-                )
-            else:
-                subprocess.run(
-                    [
-                        "bash",
-                        "-lc",
-                        "ps -eo pid,etimes,comm --no-headers 2>/dev/null | awk 'BEGIN{IGNORECASE=1} $2 ~ /chrome|chromium|msedge/ && $3 > 120 { print $1 }' | xargs -r kill -9 || true",
-                    ],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=20,
-                )
-        except Exception as e:
-            logger.warning(f"[{self.usecase_name}] Failed to force-kill orphaned browser processes: {e}")
+        force_kill_browser_processes()
 
     def _close_with_timeout(self, close_callable: Callable[[], None], resource_name: str, timeout_seconds: float = 10.0) -> None:
         """Call a Playwright close method in-band and force a process cleanup only if it raises an error.
