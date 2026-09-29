@@ -95,6 +95,7 @@ class HiDriveLegacyDocumentTest(MonitorBase):
         def delete_document():
             # Find the document and scroll it into view
             document_tile = self.page.locator('tile-item').filter(has_text=document_name)
+            document_tile.wait_for(state='visible', timeout=30000)
             document_tile.scroll_into_view_if_needed(timeout=30000)
             
             # Right-click on the item to open context menu
@@ -106,8 +107,8 @@ class HiDriveLegacyDocumentTest(MonitorBase):
             # Confirm deletion using class (language-independent)
             self.page.locator('button.confirm-overlay-ok').click(timeout=30000)
             
-            # Wait for deletion to complete
-            self.page.wait_for_timeout(1000)
+            # Do not continue until the exact document is removed from the list.
+            document_tile.wait_for(state='detached', timeout=30000)
 
         self.measure_step("05_Delete document", delete_document)
 

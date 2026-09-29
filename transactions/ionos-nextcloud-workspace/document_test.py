@@ -85,13 +85,14 @@ class IonosNextcloudWorkspaceDocumentTest(MonitorBase):
             document_row = self.page.locator(
                 f'tr[data-cy-files-list-row][data-cy-files-list-row-name="{created_document_name}"]'
             )
+            document_row.wait_for(state='visible', timeout=30000)
             document_row.locator('button.action-item__menutoggle').click(timeout=30000)
             
             # Click delete using data-cy (language-independent)
             self.page.locator('[data-cy-files-list-row-action="delete"]').click(timeout=30000)
             
-            # Wait for deletion to complete
-            self.page.wait_for_timeout(1000)
+            # Do not continue until the exact document is removed from the list.
+            document_row.wait_for(state='detached', timeout=30000)
 
         self.measure_step("05_Delete document", delete_document_logic)
 
